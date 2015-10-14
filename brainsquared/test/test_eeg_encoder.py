@@ -44,10 +44,13 @@ def recordAndEncode(encoder):
 if __name__ == "__main__":
   n = 300
   w = 31
-  minFreq = 9
-  maxFreq = 11
   minval = 0
   maxval = 0.005
+  
+  # Mu wave frequency range associated with activity in the motor cortex. 
+  # That's what we want to detect.
+  minFreq = 9
+  maxFreq = 11
 
   soundEncoder = EEGEncoder(n, w, RATE, CHUNK, minval, maxval, minFreq, maxFreq)
   sdrs = recordAndEncode(soundEncoder)
