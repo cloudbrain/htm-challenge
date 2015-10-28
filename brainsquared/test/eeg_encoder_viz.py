@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from os.path import dirname, join
 
 from brainsquared.encoder.eeg_encoder import EEGEncoder
 
@@ -8,7 +9,7 @@ from brainsquared.encoder.eeg_encoder import EEGEncoder
 CHUNK = 128
 SLIDING_WINDOW = 64
 RATE = 250
-MI_DATA = "data/motor_data.csv"
+MI_DATA = join(dirname(dirname(__file__)), "data", "motor_data.csv")
 
 
 def visualizeSDRs(sdrs):
