@@ -151,6 +151,7 @@ def remove_eyeblinks(X, ica, eye_blinks_ix):
     mixing = ica.mixing_.copy()
     mixing[:, eye_blinks_ix] = 0
 
+    sources = ica.transform(X)
     out = sources.dot(mixing.T) + means
 
     return out
