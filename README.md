@@ -19,7 +19,7 @@ $ python
 ... # success!
 ```
 
-### BrainSqaured
+### BrainSquared
 ```
 git clone https://github.com/cloudbrainlabs/htm-challenge.git
 cd htm-challenge
