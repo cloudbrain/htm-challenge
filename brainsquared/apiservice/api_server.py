@@ -164,12 +164,12 @@ def create_tag(user_id, tag_id):
 
 
 
-@app.route('/api/%s/users/<string:user_id>/classify'
+@app.route('/api/%s/users/<string:user_id>/models/<string:model_id>/classify'
            % _API_VERSION, methods=['POST'])
 def start_classification(user_id, model_id):
+  """Labels a chunk of data with a set of tags and classifies it."""
   chunk_size = int(request.form['chunkSize'])
   tags = json.loads(request.form['tags'])
-  """Start the online classification of the data"""
   if user_id in models:
     if model_id in models[user_id]:
       model = models[user_id][model_id]["model"]
@@ -178,7 +178,14 @@ def start_classification(user_id, model_id):
       metric_name = "classification"
       # TODO / WIP: should probably be in a thread or something
       worker.publish(user_id, metric_name, result)
-
+      
+      message = "Success"
+      
+    else:
+      message = "Model ID %s does not exists" % model_id
+  else:
+    message = "User ID %s does not exists" % user_id
+  return json.dumps(message), 200
 
 
 if __name__ == "__main__":
