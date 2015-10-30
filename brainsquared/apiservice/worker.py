@@ -43,7 +43,7 @@ class Worker(object):
 
     # TODO: data to return:
     # [{left: <float>, right: <float>}, .., {left: <float>, right: <float>}]
-    return json.loads(data)
+    return data
 
 
   def get_tags(self, chunk_size):
