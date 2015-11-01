@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 
-## this is a suite of functions useful for processing EEG data
-## all of the functions take a matrix X : [n_times, n_signals] of raw EEG data
+"""
+This is a suite of functions useful for processing EEG data
+all of the functions take a matrix X : [n_times, n_signals] of raw EEG data.
+"""
 
 import numpy as np
 from scipy import stats
-from scipy import signal
 
 ## for the morlet wavelet transform
 import mne
