@@ -1,7 +1,5 @@
 import pika
-from cloudbrain.subscribers.SubscriberInterface import SubscriberInterface
-from cloudbrain.utils.metadata_info import get_metrics_names
-from cloudbrain.settings import RABBITMQ_ADDRESS
+from brainsquared.subscribers.SubscriberInterface import SubscriberInterface
 
 
 
