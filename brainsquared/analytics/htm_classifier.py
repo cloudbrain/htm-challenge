@@ -10,55 +10,41 @@ class HTMClassifier(object):
   """HTM classifier for EEG data"""
 
 
-  def __init__(self, training_sets, network_config, training_set_size,
-               partitions):
-    """Constructor.
-    @param training_sets: (dict) path to left and right training sets. 
-      {"left": <path_to_csv>, "right": <path_to_csv>}
-    @param network_config: (dict) configuration for let and right networks.
-    @param training_set_size: size of the training set for both models.
-    @param partitions: (list of namedtuple) list of partitions to train the 
-      network. E.g: 
-      [Partition(partName=SP, index=0), ..., Partition(partName=test, index=0)]
+  def __init__(self, network_config, training_set):
+    """
+    Constructor.
+    @param network_config: (dict) configuration of the classification network.
+    @param training_set: (string) path to training set. 
     """
 
-    self.training_sets = training_sets
-    self.training_set_size = training_set_size
     self.network_config = network_config
-    self.partitions = partitions
-
-    self.networks = {"left": None, "right": None}
+    self.training_set = training_set
+    self.network = None
 
 
   def initialize(self):
     """Initialize classification networks for left and right electrodes."""
 
-    left_data_source = FileRecordStream(streamID=self.training_sets["left"])
-    right_data_source = FileRecordStream(streamID=self.training_sets["left"])
-
-    self.networks["left"] = configureNetwork(left_data_source,
-                                             self.network_config)
-    self.networks["right"] = configureNetwork(right_data_source,
-                                              self.network_config)
+    data_source = FileRecordStream(streamID=self.training_set)
+    self.network = configureNetwork(data_source,
+                                    self.network_config)
 
 
-  def train(self):
-    """Train the HTM networks"""
+  def train(self, training_set_size, partitions):
+    """
+    Train the HTM network
+    @param training_set_size: size of the training set.
+    @param partitions: (list of namedtuple) list of partitions to train the 
+      network. E.g: 
+      [Partition(partName=SP, index=0), ..., Partition(partName=test, index=0)]
+    @return classification_accuracy: (float) classification accuracy, 0 to 100.
 
-    classif_accuracies = {}
+    """
 
-    # train network handling data form the LEFT electrode
-    classif_accuracies["left"] = trainNetwork(self.networks["left"],
-                                              self.network_config,
-                                              self.partitions,
-                                              self.training_set_size)
-    # train network handling data form the RIGHT electrode
-    classif_accuracies["right"] = trainNetwork(self.networks["right"],
-                                               self.network_config,
-                                               self.partitions,
-                                               self.training_set_size)
-
-    return classif_accuracies
+    return trainNetwork(self.network,
+                        self.network_config,
+                        partitions,
+                        training_set_size)
 
 
   def classify(self, input_data, target, learning_is_on=True):
@@ -69,6 +55,16 @@ class HTMClassifier(object):
     @param learning_is_on: (Boolean) turn learning on or off.
     @return classification_results: classification results.
     """
-    
-    classification_result = None
-    return classification_result
+
+    _disable_all_learning(self.network, learning_is_on)
+    return _process_one_record(self.network, input_data, target)
+
+
+
+def _process_one_record(network, input_data, target):
+  pass
+
+
+
+def _disable_all_learning(network, learning_is_on):
+  pass
