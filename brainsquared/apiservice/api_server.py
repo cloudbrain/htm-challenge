@@ -5,7 +5,7 @@ from threading import Thread
 
 from flask import Flask, request
 
-from brainsquared.apiservice.motor_imagery import HTMMotorImageryModule
+from brainsquared.analytics.motor_imagery import HTMMotorImageryModule
 
 
 _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
@@ -30,6 +30,8 @@ def _num_of_modules():
 @app.route('/api/%s/users/<string:user_id>/modules' %
            _API_VERSION, methods=['POST'])
 def create_module(user_id):
+  """Create a new Analytics module and initialize it"""
+  
   module_type = request.json["module_type"]
   device_type = request.json["device_type"]
 
@@ -64,6 +66,7 @@ def create_module(user_id):
 @app.route('/api/%s/users/<string:user_id>/modules' % _API_VERSION,
            methods=['GET'])
 def get_modules(user_id):
+  """Get the IDs of all running analytics modules"""
   return json.dumps(modules[user_id].keys()), 200
 
 
@@ -71,7 +74,7 @@ def get_modules(user_id):
 @app.route('/api/%s/users/<string:user_id>/modules/<string:module_id>/tag' %
            _API_VERSION, methods=['POST'])
 def create_tag(user_id, module_id):
-  """Create new module and register it."""
+  """Create new module tag"""
   timestamp = request.json["timestamp"]
   value = request.json['value']
   data = {"timestamp": timestamp, "value": value}
