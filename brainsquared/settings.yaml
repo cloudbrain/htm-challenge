@@ -1,0 +1,5 @@
+# size of the step for STFT
+step_size: 32
+# window size for stft. should also be the buffer size for the pika publisher.
+window_size: &window_size_value 128
+buffer_size: *window_size_value
