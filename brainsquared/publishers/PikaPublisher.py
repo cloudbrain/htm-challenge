@@ -1,7 +1,7 @@
 import json
 import pika
 
-from cloudbrain.publishers.PublisherInterface import PublisherInterface
+from brainsquared.publishers.PublisherInterface import PublisherInterface
 
 
 
