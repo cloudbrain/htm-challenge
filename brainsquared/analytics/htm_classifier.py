@@ -62,9 +62,15 @@ class HTMClassifier(object):
 
 
 def _process_one_record(network, input_data, target):
-  pass
-
+  # TODO / Note: update nupic region, or maybe create a new RecordSensorRegion
+  sensorRegion = network.regions["sensor"]
+  sensorRegion.setParameter("getNextRecord", True)
+  sensorRegion.getSelf().compute()
+  network.run(1)
 
 
 def _disable_all_learning(network, learning_is_on):
-  pass
+  if learning_is_on:
+    return 
+  else:
+    raise NotImplementedError("Disabling all learning is not yet implemented")

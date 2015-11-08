@@ -5,7 +5,7 @@ from threading import Thread
 
 from flask import Flask, request
 
-from brainsquared.analytics.motor_imagery import HTMMotorImageryModule
+from brainsquared.analytics.motor_imagery_module import HTMMotorImageryModule
 
 
 _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
@@ -55,7 +55,7 @@ def create_module(user_id):
                                    _RMQ_USER,
                                    _RMQ_PWD)
     htm_mi_module.initialize()
-    thread = Thread(target=htm_mi_module.start , args = (_LOGGER,))
+    thread = Thread(target=htm_mi_module.start)
     thread.start()
     modules[user_id][module_id] = htm_mi_module
 

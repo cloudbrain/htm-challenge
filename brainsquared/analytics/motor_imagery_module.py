@@ -90,21 +90,19 @@ class HTMMotorImageryModule(object):
     self.classification_publisher.register(self.routing_keys["classification"])
     
 
-  def start(self, logger):
+  def start(self):
     
-    logger.info("[Module %s] Starting Motor Imagery module. Routing keys: %s" 
+    _LOGGER.info("[Module %s] Starting Motor Imagery module. Routing keys: %s" 
                 % (self.module_id, self.routing_keys))
 
-    def _callback(ch, method, properties, body):
-      self.last_tag = self._update_last_tag(self.last_tag)
-      logger.info("[Module %s] mu: %s | last_tag: %s" % (self.module_id, body, 
-                                                        self.last_tag))
-
-    
-    self.mu_subscriber.consume_messages(self.routing_keys["mu"], _callback)
+   
+    self.mu_subscriber.consume_messages(self.routing_keys["mu"], 
+                                        self._tag_and_classify)
 
 
   def _update_last_tag(self, last_tag):
+    """Consume all tags in the queue and keep the last one (i.e. the most up 
+    to date)"""
     while 1:
       (meth_frame, header_frame, body) = self.tag_subscriber.get_one_message(
         self.routing_keys["tag"])
@@ -112,45 +110,65 @@ class HTMMotorImageryModule(object):
          last_tag = body
       else:
         return last_tag
+  
+  
+  def _tag_and_classify(self, ch, method, properties, body):
+    """Tag data and runs it through the classifier"""
     
+    self.last_tag = self._update_last_tag(self.last_tag)
+    _LOGGER.info("[Module %s] mu: %s | last_tag: %s" % (self.module_id, body, 
+                                                      self.last_tag))
     
-  def _consume_messages(self, routing_key, buffer_size=1):
-    """
-    Get all items in the queue
-    @return buffer: (list) list of points
-    points). E.g:
-      [
-        {left: <float>, right: <float>}, .., {left: <float>, right: <float>},
-        ...
-        {left: <float>, right: <float>}, .., {left: <float>, right: <float>}
-      ]
-    """
-
-    buffer = []
-    while len(buffer) < buffer_size:
-      (meth_frame, header_frame, body) = self.subscriber.get_one_message(
-        routing_key)
-      if body:
-        buffer.append(json.loads(body))
-
-    return buffer
-
-
-  def _publish(self, data):
-    self.publisher.publish(self.out_routing_key, data)
-
-
-  def do_job(self, model, tag):
-    """
-    Get all buffers of data in the queue, tag and classify them, 
-    and publish it back to RMQ.
-    """
-
-    buffer = self._consume_messages(self.in_routing_key, buffer_size=1)
-
-    for datapoint in buffer:
-      results = _tag_and_classify(datapoint, model, tag)
-      self._publish(results)
+    mu_left = body["left"]
+    mu_right = body["right"]
+    mu_timestamp = body["timestamp"]
+    tag_value = self.last_tag["value"]
+    tag_timestamp = self.last_tag["timestamp"]
+      
+    # skip classification if tag and mu have more than 1s delay
+    skip_classification = False
+    if abs(tag_timestamp - mu_timestamp) > 1000:
+      skip_classify = True
+  
+  #   
+  #   
+  # def _consume_messages(self, routing_key, buffer_size=1):
+  #   """
+  #   Get all items in the queue
+  #   @return buffer: (list) list of points
+  #   points). E.g:
+  #     [
+  #       {left: <float>, right: <float>}, .., {left: <float>, right: <float>},
+  #       ...
+  #       {left: <float>, right: <float>}, .., {left: <float>, right: <float>}
+  #     ]
+  #   """
+  # 
+  #   buffer = []
+  #   while len(buffer) < buffer_size:
+  #     (meth_frame, header_frame, body) = self.subscriber.get_one_message(
+  #       routing_key)
+  #     if body:
+  #       buffer.append(json.loads(body))
+  # 
+  #   return buffer
+  # 
+  # 
+  # def _publish(self, data):
+  #   self.publisher.publish(self.out_routing_key, data)
+  # 
+  # 
+  # def do_job(self, model, tag):
+  #   """
+  #   Get all buffers of data in the queue, tag and classify them, 
+  #   and publish it back to RMQ.
+  #   """
+  # 
+  #   buffer = self._consume_messages(self.in_routing_key, buffer_size=1)
+  # 
+  #   for datapoint in buffer:
+  #     results = _tag_and_classify(datapoint, model, tag)
+  #     self._publish(results)
 
 
 
