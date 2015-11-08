@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import simplejson as json
+import simplejson
 import unittest
 
 from htmresearch.frameworks.classification.utils.network_config import \
@@ -15,31 +15,25 @@ _TRAINING_DATA = "data/test_data.csv"
 
 class HTMClassifierTest(unittest.TestCase):
   def setUp(self):
-    self.network_config = None
-    self.classifier = None
     with open(_NTWK_CONFIG, "rb") as jsonFile:
-      self.network_config = json.load(jsonFile)
-
+      self.network_config = simplejson.load(jsonFile)
+    self.classifier = HTMClassifier(self.network_config, _TRAINING_DATA)
+    self.classifier.initialize()
 
   def testTrainingAccuracy(self):
     partitions = generateNetworkPartitions(self.network_config, _TRAIN_SET_SIZE)
-    training_sets = {"left": _TRAINING_DATA, "right": _TRAINING_DATA}
-
-    self.classifier = HTMClassifier(training_sets, self.network_config,
-                                    _TRAIN_SET_SIZE, partitions)
-
-    self.classifier.initialize()
-    training_accuracies = self.classifier.train()
-
-    self.assertEqual(training_accuracies["left"],
-                     94.75, "left classification accuracy is incorrect")
-    self.assertEqual(training_accuracies["right"],
-                     94.75, "right classification accuracy is incorrect")
+    training_accuracy = self.classifier.train(_TRAIN_SET_SIZE, partitions)
+    self.assertEqual(training_accuracy, 94.75,
+                     "classification accuracy is incorrect")
 
 
-    def testClassificationAccuracy(self):
-      self.classifier.classify()
+  def testClassificationAccuracy(self):
+    mu = {"timestamp": 0, "left": 1, "right": 0}
+    tag = {"timestamp": 0, "value": "left"}
+    result = self.classifier.classify(input_data=mu, target=tag, 
+                                  learning_is_on=True)
+    print "classification_result: %s" % result
 
 
-  if __name__ == "__main__":
-    unittest.main()
+if __name__ == "__main__":
+  unittest.main()

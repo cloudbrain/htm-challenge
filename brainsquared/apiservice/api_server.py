@@ -1,11 +1,10 @@
 import json
-import logging
 
 from threading import Thread
 
 from flask import Flask, request
 
-from brainsquared.apiservice.motor_imagery import HTMMotorImageryModule
+from brainsquared.analytics.motor_imagery_module import HTMMotorImageryModule
 
 
 _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
@@ -14,7 +13,6 @@ _RMQ_PWD = "cloudbrain"
 _WEBSERVER_PORT = 8080
 _API_VERSION = "v0.1"
 
-_LOGGER = logging.getLogger(__name__)
 modules = {}
 
 app = Flask(__name__)
@@ -30,6 +28,8 @@ def _num_of_modules():
 @app.route('/api/%s/users/<string:user_id>/modules' %
            _API_VERSION, methods=['POST'])
 def create_module(user_id):
+  """Create a new Analytics module and initialize it"""
+  
   module_type = request.json["module_type"]
   device_type = request.json["device_type"]
 
@@ -38,8 +38,6 @@ def create_module(user_id):
   else:
     module_id = "module%s" % _num_of_modules()
   
-  print "NUM OF MODULES: %s" % _num_of_modules()
-
   if user_id not in modules:
     modules[user_id] = {}
   if module_type == "motor_imagery":
@@ -53,7 +51,7 @@ def create_module(user_id):
                                    _RMQ_USER,
                                    _RMQ_PWD)
     htm_mi_module.initialize()
-    thread = Thread(target=htm_mi_module.start , args = (_LOGGER,))
+    thread = Thread(target=htm_mi_module.start)
     thread.start()
     modules[user_id][module_id] = htm_mi_module
 
@@ -64,6 +62,7 @@ def create_module(user_id):
 @app.route('/api/%s/users/<string:user_id>/modules' % _API_VERSION,
            methods=['GET'])
 def get_modules(user_id):
+  """Get the IDs of all running analytics modules"""
   return json.dumps(modules[user_id].keys()), 200
 
 
@@ -71,7 +70,7 @@ def get_modules(user_id):
 @app.route('/api/%s/users/<string:user_id>/modules/<string:module_id>/tag' %
            _API_VERSION, methods=['POST'])
 def create_tag(user_id, module_id):
-  """Create new module and register it."""
+  """Create new module tag"""
   timestamp = request.json["timestamp"]
   value = request.json['value']
   data = {"timestamp": timestamp, "value": value}
