@@ -1,5 +1,4 @@
 import json
-import logging
 
 from threading import Thread
 
@@ -14,7 +13,6 @@ _RMQ_PWD = "cloudbrain"
 _WEBSERVER_PORT = 8080
 _API_VERSION = "v0.1"
 
-_LOGGER = logging.getLogger(__name__)
 modules = {}
 
 app = Flask(__name__)
@@ -40,8 +38,6 @@ def create_module(user_id):
   else:
     module_id = "module%s" % _num_of_modules()
   
-  print "NUM OF MODULES: %s" % _num_of_modules()
-
   if user_id not in modules:
     modules[user_id] = {}
   if module_type == "motor_imagery":
