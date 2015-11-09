@@ -43,6 +43,11 @@ class HTMMotorImageryModule(object):
                rmq_address,
                rmq_user,
                rmq_pwd):
+
+    self.stats = {
+      "left": {"min": None, "max": None},
+      "right": {"min": None, "max": None}
+      }
     self.module_id = module_id
     self.user_id = user_id
     self.device_type = device_type
@@ -144,10 +149,14 @@ class HTMMotorImageryModule(object):
       results = {}
       for (hemisphere, classifier) in self.classifiers.items():
         mu_value = mu[hemisphere]
+        if _LOGGER.level == logging.DEBUG:
+          self._update_stats(hemisphere, mu_value)
+          _LOGGER.debug(self.stats)
         tag_value = self.last_tag["value"]
         results[hemisphere] = classifier.classify(input_data=mu_value,
                                                   target=tag_value,
                                                   learning_is_on=True)
+
 
       _LOGGER.debug("Raw results: %s" % results)
       
@@ -166,6 +175,26 @@ class HTMMotorImageryModule(object):
       self.classification_publisher.publish(self.routing_keys["classification"],
                                             buffer)
 
+
+  def _update_stats(self, hemisphere, mu_value):
+    """
+    Update stats.
+     self.stats = {
+      "left": {"min": None, "max": None},
+      "right": {"min": None, "max": None}
+      }
+    """
+    min_val = self.stats[hemisphere]["min"]
+    max_val = self.stats[hemisphere]["max"]
+    
+    if not min_val:
+      self.stats[hemisphere]["min"] = mu_value
+    if not max_val:
+      self.stats[hemisphere]["max"] = mu_value  
+    if mu_value < min_val:
+      self.stats[hemisphere]["min"] = mu_value
+    if mu_value > max_val:
+      self.stats[hemisphere]["max"] = mu_value  
 
 
 def _reconcile_results(left_result, right_result):
