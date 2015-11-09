@@ -15,7 +15,7 @@ from sklearn.decomposition import FastICA
 
 import pandas as pd
 import csv
-# import os.path
+import os.path
 
 def stft(X, y=None, box_width=128, step=32, pad_width=0, kaiser_beta=14, include_phase=True, log_mag=False):
     """performs short time fourier transform, with Kaiser window
@@ -192,8 +192,8 @@ def remove_eyeblinks_full(X):
 
 # metadata: <dict>
 # {
-# "left": {"main":"channel_0", "artifact":["channel_1", "channel_2", "channel_3"] },
-# "right": {"main":"channel_4", "artifact":["channel_5", "channel_6", "channel_7" ] },
+# "left": {"main":"channel_3", "artifact":["channel_0", "channel_4", "channel_6"] },
+# "right": {"main":"channel_5", "artifact":["channel_2", "channel_4", "channel_7" ] },
 # }
 
 
@@ -299,30 +299,28 @@ def preprocess_stft(data, metadata, notch_filter=True,
 
 
 
-# def write_arrs_to_files(out_dir, arrs, tagd):
-#     out_dir = os.path.split(path_to_csv)[0]
-# 
-#     for name, processed in arrs:
-#         out_fname = os.path.join(out_dir, '{}_test.csv'.format(name))
-# 
-#         f_writer = open(out_fname, 'w')
-#         writer = csv.writer(f_writer)
-# 
-#         writer.writerow(['x', 'y', 'label'])
-#         writer.writerow(['float', 'float', 'int'])
-#         writer.writerow(['', '', 'C'])
-# 
-#         for i in xrange(decimated.shape[0]):
-#             # mag, phase = cwt[i]
-#             mag = processed[i]
-#             row = [timed[i], mag, int(tagd[i])]
-#             writer.writerow(row)
-# 
-#         f_writer.close()
-# 
-#         fnames[name] = out_fname
-# 
-#     return fnames
+def write_arrs_to_files(out_dir, arrs, tagd):
+    for name, processed in arrs:
+        out_fname = os.path.join(out_dir, '{}_test.csv'.format(name))
+
+        f_writer = open(out_fname, 'w')
+        writer = csv.writer(f_writer)
+
+        writer.writerow(['x', 'y', 'label'])
+        writer.writerow(['float', 'float', 'int'])
+        writer.writerow(['', '', 'C'])
+
+        for i in xrange(decimated.shape[0]):
+            # mag, phase = cwt[i]
+            mag = processed[i]
+            row = [timed[i], mag, int(tagd[i])]
+            writer.writerow(row)
+
+        f_writer.close()
+
+        fnames[name] = out_fname
+
+    return fnames
 
 
 
