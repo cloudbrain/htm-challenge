@@ -11,10 +11,10 @@ _ROUTING_KEY = "%s:%s:%s"
 # EEG electrodes placement
 _METADATA = {
   "left": {
-    "main": "channel_0", "artifact": ["channel_1", "channel_2", "channel_3"]
+    "main": "channel_3", "unused": ["channel_0", "channel_4", "channel_6"]
     },
   "right": {
-    "main": "channel_4", "artifact": ["channel_5", "channel_6", "channel_7"]
+    "main": "channel_5", "unused": ["channel_2", "channel_4", "channel_7"]
     },
 }
 
@@ -88,4 +88,5 @@ class PreprocessingModule(object):
 
     data = {"timestamp": timestamp, "left": mu_left, "right": mu_right} 
     
+    _LOGGER.debug("--> mu: %s" % data)
     self.mu_publisher.publish(self.routing_keys[_MU], data)
