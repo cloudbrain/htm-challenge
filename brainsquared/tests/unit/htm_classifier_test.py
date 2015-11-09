@@ -10,7 +10,7 @@ from brainsquared.analytics.htm_classifier import HTMClassifier
 _TRAIN_SET_SIZE = 2000
 _NTWK_CONFIG = "config/network_config.json"
 _TRAINING_DATA = "data/test_data.csv"
-_CATEGORIES = ["middle", "left", "right"]
+_CATEGORIES = ["baseline", "left", "right"]
 
 
 class HTMClassifierTest(unittest.TestCase):

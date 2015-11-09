@@ -63,7 +63,7 @@ class HTMClassifier(object):
 
 
   def _process_one_record(self, network, input_data, target):
-    # TODO / Note: update nupic region, or maybe create a new RecordSensorRegion
+
     sensorRegion = network.regions["sensor"]
     sensorRegion.setParameter("useDataSource", False)
     sensorRegion.setParameter("nextInput", input_data)

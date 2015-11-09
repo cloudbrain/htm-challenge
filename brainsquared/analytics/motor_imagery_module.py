@@ -22,7 +22,7 @@ _MU = "mu"
 _TAG = "tag"
 _CLASSIFICATION = "classification"
 
-_CATEGORIES = ["middle", "left", "right"]
+_CATEGORIES = ["baseline", "left", "right"]
 
 logging.basicConfig()
 _LOGGER = logging.getLogger(__name__)
@@ -45,6 +45,7 @@ class HTMMotorImageryModule(object):
                rmq_pwd):
     self.module_id = module_id
     self.user_id = user_id
+    self.device_type = device_type
     self.rmq_address = rmq_address
     self.rmq_user = rmq_user
     self.rmq_pwd = rmq_pwd
@@ -61,7 +62,7 @@ class HTMMotorImageryModule(object):
     }
 
     self.start_time = int(time.time() * 1000)  # in ms
-    self.last_tag = {"timestamp": self.start_time, "value": "middle"}
+    self.last_tag = {"timestamp": self.start_time, "value": _CATEGORIES[0]}
 
     self.classifiers = {"left": None, "right": None}
 
@@ -127,7 +128,7 @@ class HTMMotorImageryModule(object):
     """Tag data and runs it through the classifier"""
     
     self.last_tag = self._update_last_tag(self.last_tag)
-    _LOGGER.info("[Module %s] mu: %s | last_tag: %s" % (self.module_id, body, 
+    _LOGGER.debug("[Module %s] mu: %s | last_tag: %s" % (self.module_id, body, 
                                                       self.last_tag))
 
     mu = json.loads(body)
@@ -136,8 +137,8 @@ class HTMMotorImageryModule(object):
 
     # skip classification if tag and mu have more than 1s delay
     skip_classification = False
-    if abs(tag_timestamp - mu_timestamp) > 1000:
-      skip_classification = True
+    #if abs(tag_timestamp * 1000 - mu_timestamp) > 1000000: # in micro seconds
+    #  skip_classification = True
 
     if not skip_classification:
       results = {}
@@ -148,21 +149,22 @@ class HTMMotorImageryModule(object):
                                                   target=tag_value,
                                                   learning_is_on=True)
 
-      _LOGGER.info("Raw results: %s" % results)
+      _LOGGER.debug("Raw results: %s" % results)
       
       left_result = _CATEGORIES[int(results["left"])]
       right_result = _CATEGORIES[int(results["right"])]
       
-      _LOGGER.info("Human readable results: %s" % 
+      _LOGGER.debug("Human readable results: %s" % 
                    {"left_electrode_class": left_result,
                     "right_electrode_class": right_result})
       
       classification_result = _reconcile_results(left_result,
                                                  right_result)
+      
+      buffer = [{"timestamp": mu_timestamp, "value": classification_result}]
 
       self.classification_publisher.publish(self.routing_keys["classification"],
-                                            classification_result
-                                            )
+                                            buffer)
 
 
 

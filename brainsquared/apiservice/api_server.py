@@ -5,6 +5,7 @@ from threading import Thread
 from flask import Flask, request
 
 from brainsquared.analytics.motor_imagery_module import HTMMotorImageryModule
+from brainsquared.analytics.preprocessing_module import PreprocessingModule
 
 
 _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
@@ -13,6 +14,7 @@ _RMQ_PWD = "cloudbrain"
 _WEBSERVER_PORT = 8080
 _API_VERSION = "v0.1"
 
+_VALID_MODULES = ["motor_imagery"]
 modules = {}
 
 app = Flask(__name__)
@@ -37,15 +39,23 @@ def create_module(user_id):
     module_id = "module0"
   else:
     module_id = "module%s" % _num_of_modules()
-  
+
   if user_id not in modules:
     modules[user_id] = {}
-  if module_type == "preprocessing":
-    pass
-  elif module_type == "motor_imagery":
-    # Here you could imagine having multiple motor imagery modules in 
-    # addition to the HTM motor imagery module. Like a SVM classifier 
-    # for example.
+   
+  if module_type == "motor_imagery":
+    preproc_module = PreprocessingModule(user_id,
+                                         module_id,
+                                         device_type,
+                                         _RMQ_ADDRESS,
+                                         _RMQ_USER,
+                                         _RMQ_PWD)
+    preproc_module.initialize()
+    thread = Thread(target=preproc_module.start)
+    thread.start()
+    modules[user_id][module_id] = preproc_module
+    
+    module_id = "module%s" %(len(modules))
     htm_mi_module = HTMMotorImageryModule(user_id, 
                                    module_id, 
                                    device_type,
@@ -56,11 +66,11 @@ def create_module(user_id):
     thread = Thread(target=htm_mi_module.start)
     thread.start()
     modules[user_id][module_id] = htm_mi_module
-  else:
-    return json.dumps("Wrong module type: %s. Accepted types are: "
-                      "['motor_imagery', 'preprocessing']" % module_type)
+  if module_type not in _VALID_MODULES:
+    return json.dumps("Wrong module type: %s. Valid modules: %s"
+                      % (module_type, _VALID_MODULES))
 
-  return json.dumps(module_id), 200
+  return json.dumps({"id":module_id}), 200
 
 
 
