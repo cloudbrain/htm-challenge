@@ -1,3 +1,6 @@
+"""
+Endpoint to send tags to rabbitMQ
+"""
 import json
 
 from flask import Flask, request
