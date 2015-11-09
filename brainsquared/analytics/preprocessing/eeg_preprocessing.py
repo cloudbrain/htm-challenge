@@ -235,7 +235,7 @@ def preprocess_general(process, data, metadata):
     return arrs
 
 
-def preprocess_morlet(data, metadata, downsampling_factor=32,
+def preprocess_morlet(data, metadata, notch_filter=True, downsampling_factor=32,
                       sfreq=250, freqs=[10], n_cycles=50):
 
     b1, a1 = signal.iirfilter(1, [59.0/125.0, 61.0/125.0], btype='bandstop')
@@ -248,7 +248,8 @@ def preprocess_morlet(data, metadata, downsampling_factor=32,
             arr = signal.lfilter(b2, a2, arr)
 
         cwt = wavelet_transform(arr[:, np.newaxis], sfreq=sfreq, freqs=freqs,
-                                n_cycles=n_cycles, include_phase=False, log_mag=False)
+                                n_cycles=n_cycles, include_phase=False, 
+                                log_mag=True)
 
         arr = cwt.mean(axis=1)
 
@@ -282,7 +283,7 @@ def preprocess_stft(data, metadata, notch_filter=True,
 
         out = stft(arr[:, np.newaxis],
                    box_width=box_width, step=downsampling_factor, pad_width=0,
-                   kaiser_beta=kaiser_beta, include_phase=False, log_mag=False)
+                   kaiser_beta=kaiser_beta, include_phase=False, log_mag=True)
 
         fftfreq = np.fft.rfftfreq(box_width, d=1/float(sfreq))
         good = np.logical_and(fftfreq >= low_f, fftfreq <= high_f)
@@ -298,30 +299,30 @@ def preprocess_stft(data, metadata, notch_filter=True,
 
 
 
-def write_arrs_to_files(out_dir, arrs, tagd):
-    out_dir = os.path.split(path_to_csv)[0]
-
-    for name, processed in arrs:
-        out_fname = os.path.join(out_dir, '{}_test.csv'.format(name))
-
-        f_writer = open(out_fname, 'w')
-        writer = csv.writer(f_writer)
-
-        writer.writerow(['x', 'y', 'label'])
-        writer.writerow(['float', 'float', 'int'])
-        writer.writerow(['', '', 'C'])
-
-        for i in xrange(decimated.shape[0]):
-            # mag, phase = cwt[i]
-            mag = processed[i]
-            row = [timed[i], mag, int(tagd[i])]
-            writer.writerow(row)
-
-        f_writer.close()
-
-        fnames[name] = out_fname
-
-    return fnames
+# def write_arrs_to_files(out_dir, arrs, tagd):
+#     out_dir = os.path.split(path_to_csv)[0]
+# 
+#     for name, processed in arrs:
+#         out_fname = os.path.join(out_dir, '{}_test.csv'.format(name))
+# 
+#         f_writer = open(out_fname, 'w')
+#         writer = csv.writer(f_writer)
+# 
+#         writer.writerow(['x', 'y', 'label'])
+#         writer.writerow(['float', 'float', 'int'])
+#         writer.writerow(['', '', 'C'])
+# 
+#         for i in xrange(decimated.shape[0]):
+#             # mag, phase = cwt[i]
+#             mag = processed[i]
+#             row = [timed[i], mag, int(tagd[i])]
+#             writer.writerow(row)
+# 
+#         f_writer.close()
+# 
+#         fnames[name] = out_fname
+# 
+#     return fnames
 
 
 
