@@ -4,7 +4,7 @@
     "regionName": "sensor",
     "regionType": "py.RecordSensor",
     "regionParams": {
-      "verbosity": 0,
+      "verbosity": 1,
       "numCategories": 3
     },
     "encoders": {
