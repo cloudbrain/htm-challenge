@@ -1,5 +1,6 @@
 import simplejson as json
 import logging
+import time
 
 from htmresearch.frameworks.classification.utils.network_config import \
   generateNetworkPartitions
@@ -7,7 +8,7 @@ from htmresearch.frameworks.classification.utils.network_config import \
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 
-from brainsquared.analytics.htm_classifier import HTMClassifier
+from brainsquared.analytics.motor_imagery.htm_classifier import HTMClassifier
 
 _LEARNING_IS_ON = True
 _NETWORK_CONFIG = "config/network_config.json"
@@ -21,8 +22,12 @@ _MU = "mu"
 _TAG = "tag"
 _CLASSIFICATION = "classification"
 
-# size of the data batch to take from a rabbitMQ queue
+_CATEGORIES = ["baseline", "left", "right"]
+
+logging.basicConfig()
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.DEBUG)
+
 
 with open(_NETWORK_CONFIG, "rb") as jsonFile:
   network_config = json.load(jsonFile)
@@ -40,6 +45,7 @@ class HTMMotorImageryModule(object):
                rmq_pwd):
     self.module_id = module_id
     self.user_id = user_id
+    self.device_type = device_type
     self.rmq_address = rmq_address
     self.rmq_user = rmq_user
     self.rmq_pwd = rmq_pwd
@@ -55,19 +61,25 @@ class HTMMotorImageryModule(object):
       "classification": _ROUTING_KEY % (user_id, module_id, _CLASSIFICATION)
     }
 
-    self.last_tag = None
+    self.start_time = int(time.time() * 1000)  # in ms
+    self.last_tag = {"timestamp": self.start_time, "value": _CATEGORIES[0]}
+
+    self.classifiers = {"left": None, "right": None}
 
   def initialize(self):
     """
     Initialize classifier, publisher (classification), and subscribers (mu 
     and tag)
     """
-  
-    classifier = HTMClassifier(network_config, _TRAINING_DATA)
-    classifier.initialize()
 
-    if _PRE_TRAIN:
-      classifier.train(_TRAIN_SET_SIZE, partitions)
+    self.classifiers["left"] = HTMClassifier(network_config, _TRAINING_DATA,
+                                             _CATEGORIES)
+    self.classifiers["right"] = HTMClassifier(network_config, _TRAINING_DATA,
+                                              _CATEGORIES)
+    for classifier in self.classifiers.values():
+      classifier.initialize()
+      if _PRE_TRAIN:
+        classifier.train(_TRAIN_SET_SIZE, partitions)
 
 
     self.tag_subscriber = PikaSubscriber(self.rmq_address,
@@ -107,7 +119,7 @@ class HTMMotorImageryModule(object):
       (meth_frame, header_frame, body) = self.tag_subscriber.get_one_message(
         self.routing_keys["tag"])
       if body:
-         last_tag = body
+        last_tag = json.loads(body)
       else:
         return last_tag
   
@@ -116,103 +128,64 @@ class HTMMotorImageryModule(object):
     """Tag data and runs it through the classifier"""
     
     self.last_tag = self._update_last_tag(self.last_tag)
-    _LOGGER.info("[Module %s] mu: %s | last_tag: %s" % (self.module_id, body, 
+    _LOGGER.debug("[Module %s] mu: %s | last_tag: %s" % (self.module_id, body, 
                                                       self.last_tag))
-    
-    mu_left = body["left"]
-    mu_right = body["right"]
-    mu_timestamp = body["timestamp"]
-    tag_value = self.last_tag["value"]
+
+    mu = json.loads(body)
+    mu_timestamp = mu["timestamp"]
     tag_timestamp = self.last_tag["timestamp"]
-      
+
     # skip classification if tag and mu have more than 1s delay
     skip_classification = False
-    if abs(tag_timestamp - mu_timestamp) > 1000:
-      skip_classify = True
-  
-  #   
-  #   
-  # def _consume_messages(self, routing_key, buffer_size=1):
-  #   """
-  #   Get all items in the queue
-  #   @return buffer: (list) list of points
-  #   points). E.g:
-  #     [
-  #       {left: <float>, right: <float>}, .., {left: <float>, right: <float>},
-  #       ...
-  #       {left: <float>, right: <float>}, .., {left: <float>, right: <float>}
-  #     ]
-  #   """
-  # 
-  #   buffer = []
-  #   while len(buffer) < buffer_size:
-  #     (meth_frame, header_frame, body) = self.subscriber.get_one_message(
-  #       routing_key)
-  #     if body:
-  #       buffer.append(json.loads(body))
-  # 
-  #   return buffer
-  # 
-  # 
-  # def _publish(self, data):
-  #   self.publisher.publish(self.out_routing_key, data)
-  # 
-  # 
-  # def do_job(self, model, tag):
-  #   """
-  #   Get all buffers of data in the queue, tag and classify them, 
-  #   and publish it back to RMQ.
-  #   """
-  # 
-  #   buffer = self._consume_messages(self.in_routing_key, buffer_size=1)
-  # 
-  #   for datapoint in buffer:
-  #     results = _tag_and_classify(datapoint, model, tag)
-  #     self._publish(results)
+    #if abs(tag_timestamp * 1000 - mu_timestamp) > 1000000: # in micro seconds
+    #  skip_classification = True
+
+    if not skip_classification:
+      results = {}
+      for (hemisphere, classifier) in self.classifiers.items():
+        mu_value = mu[hemisphere]
+        tag_value = self.last_tag["value"]
+        results[hemisphere] = classifier.classify(input_data=mu_value,
+                                                  target=tag_value,
+                                                  learning_is_on=True)
+
+      _LOGGER.debug("Raw results: %s" % results)
+      
+      left_result = _CATEGORIES[int(results["left"])]
+      right_result = _CATEGORIES[int(results["right"])]
+      
+      _LOGGER.debug("Human readable results: %s" % 
+                   {"left_electrode_class": left_result,
+                    "right_electrode_class": right_result})
+      
+      classification_result = _reconcile_results(left_result,
+                                                 right_result)
+      
+      buffer = [{"timestamp": mu_timestamp, "value": classification_result}]
+
+      self.classification_publisher.publish(self.routing_keys["classification"],
+                                            buffer)
 
 
 
-def _tag_and_classify(data, model, best_tag):
+def _reconcile_results(left_result, right_result):
   """
-  Label a datapoint with the best tag and get classification 
-  result.
-  @return result: classification result
-  """
-  mu_left = data["left"]
-  mu_right = data["right"]
-
-  # combine tags with input data and classify 
-  left_result = model["left"].classify(best_tag, mu_left,
-                                       _LEARNING_IS_ON)
-  right_result = model["right"].classify(best_tag, mu_right,
-                                         _LEARNING_IS_ON)
-
-  result = _reconcile_results(left_result, right_result, best_tag)
-  return result
-
-
-
-def _reconcile_results(left_result, right_result, best_tag):
-  """
-  
+  Reconcile results from the left and right electrodes and their respective 
+  models.
   @param left_result: result from the left electrode classification
   @param right_result: result from the right electrode classification
-  @param best_tag: most common tag. Used if the two results disagree.
   @return: result after reconciliation of the two input results.
   """
 
-  if left_result == right_result:
-    return left_result
+
+  if left_result == "left" and right_result == "left":
+    return -2
+  elif left_result == "right" and left_result == "right":
+    return 2
+  elif left_result == "left" and right_result == "left":
+    return -1
+  elif left_result == "right" and right_result == "right":
+    return 1
   else:
-    return best_tag
-
-
-
-def _get_best_tag(tags):
-  """
-  Extract the best tag from a list of tag. Here we take the mean of the tags 
-  and consider it is the best value.
-  @param tags: (list) tags from which with want to extract the bets tag value.
-  @return last_tag: (float) best tag value.
-  """
-  return sum(tags) / max(len(tags), 1)
+    return 0
+      
