@@ -237,7 +237,14 @@ def preprocess_general(process, data, metadata):
 
 def preprocess_morlet(data, metadata, downsampling_factor=32,
                       sfreq=250, freqs=[10], n_cycles=50):
+
+    b, a = signal.iirfilter(4, [56/250.0, 64/250.0], btype='bandstop')
+
     def do_morlet(arr):
+
+        if notch_filter:
+            arr = signal.lfilter(b, a, arr)
+
         cwt = wavelet_transform(arr[:, np.newaxis], sfreq=sfreq, freqs=freqs,
                                 n_cycles=n_cycles, include_phase=False, log_mag=False)
 
@@ -264,7 +271,7 @@ def preprocess_stft(data, metadata, notch_filter=True,
 
         if notch_filter:
             arr = signal.lfilter(b, a, arr)
-        
+
         out = stft(arr[:, np.newaxis],
                    box_width=box_width, step=downsampling_factor, pad_width=0,
                    kaiser_beta=kaiser_beta, include_phase=False, log_mag=False)
@@ -276,7 +283,7 @@ def preprocess_stft(data, metadata, notch_filter=True,
         return out
 
 
-    
+
     return preprocess_general(process=do_stft,
                               data=data, metadata=metadata)
 
@@ -315,7 +322,7 @@ def read_file_to_buffer(path_to_csv):
     reader = csv.DictReader(f)
 
     out = []
-    
+
     for row in reader:
         r = dict()
         for k, v in row.items():
@@ -369,5 +376,3 @@ def preprocess_morlet_file(path_to_csv, metadata,
 
 
 ## TODO: add ICA stuff to remove eye blinks here
-
-
