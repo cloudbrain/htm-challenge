@@ -59,7 +59,7 @@ def stft(X, y=None, box_width=128, step=32, pad_width=0, kaiser_beta=14, include
 
     for start in range(0, m, step):
         end = start + box_width
-        if end >= len(X):
+        if end > len(X):
             break
 
         x = X[start:end,]
@@ -237,7 +237,14 @@ def preprocess_general(process, data, metadata):
 
 def preprocess_morlet(data, metadata, downsampling_factor=32,
                       sfreq=250, freqs=[10], n_cycles=50):
+
+    b, a = signal.iirfilter(4, [56/250.0, 64/250.0], btype='bandstop')
+
     def do_morlet(arr):
+
+        if notch_filter:
+            arr = signal.lfilter(b, a, arr)
+
         cwt = wavelet_transform(arr[:, np.newaxis], sfreq=sfreq, freqs=freqs,
                                 n_cycles=n_cycles, include_phase=False, log_mag=False)
 
@@ -254,11 +261,17 @@ def preprocess_morlet(data, metadata, downsampling_factor=32,
                               data=data, metadata=metadata)
 
 
-def preprocess_stft(data, metadata,
+def preprocess_stft(data, metadata, notch_filter=True,
                     box_width=128, downsampling_factor=32,
                     sfreq=250, low_f=8, high_f=12, kaiser_beta=14):
 
+    b, a = signal.iirfilter(4, [56/250.0, 64/250.0], btype='bandstop')
+
     def do_stft(arr):
+
+        if notch_filter:
+            arr = signal.lfilter(b, a, arr)
+
         out = stft(arr[:, np.newaxis],
                    box_width=box_width, step=downsampling_factor, pad_width=0,
                    kaiser_beta=kaiser_beta, include_phase=False, log_mag=False)
@@ -268,6 +281,7 @@ def preprocess_stft(data, metadata,
         out = out[:, good].mean(axis=1)
 
         return out
+
 
 
     return preprocess_general(process=do_stft,
@@ -308,14 +322,17 @@ def read_file_to_buffer(path_to_csv):
     reader = csv.DictReader(f)
 
     out = []
-    
+
     for row in reader:
         r = dict()
         for k, v in row.items():
             if v == None or v == 'nan':
                 r = False
                 break
-            r[k] = float(v)
+            try:
+                r[k] = float(v)
+            except ValueError:
+                r[k] = v
         if r:
             out.append(r)
 
