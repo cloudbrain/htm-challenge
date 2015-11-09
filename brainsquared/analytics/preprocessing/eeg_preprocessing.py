@@ -238,12 +238,14 @@ def preprocess_general(process, data, metadata):
 def preprocess_morlet(data, metadata, downsampling_factor=32,
                       sfreq=250, freqs=[10], n_cycles=50):
 
-    b, a = signal.iirfilter(4, [56/250.0, 64/250.0], btype='bandstop')
+    b1, a1 = signal.iirfilter(1, [59.0/125.0, 61.0/125.0], btype='bandstop')
+    b2, a2 = signal.iirfilter(1, 3.0/125.0, btype='highpass')
 
     def do_morlet(arr):
 
         if notch_filter:
-            arr = signal.lfilter(b, a, arr)
+            arr = signal.lfilter(b1, a1, arr)
+            arr = signal.lfilter(b2, a2, arr)
 
         cwt = wavelet_transform(arr[:, np.newaxis], sfreq=sfreq, freqs=freqs,
                                 n_cycles=n_cycles, include_phase=False, log_mag=False)
@@ -265,12 +267,14 @@ def preprocess_stft(data, metadata, notch_filter=True,
                     box_width=128, downsampling_factor=32,
                     sfreq=250, low_f=8, high_f=12, kaiser_beta=14):
 
-    b, a = signal.iirfilter(4, [56/250.0, 64/250.0], btype='bandstop')
+    b1, a1 = signal.iirfilter(1, [59.0/125.0, 61.0/125.0], btype='bandstop')
+    b2, a2 = signal.iirfilter(1, 3.0/125.0, btype='highpass')
 
     def do_stft(arr):
 
         if notch_filter:
-            arr = signal.lfilter(b, a, arr)
+            arr = signal.lfilter(b1, a1, arr)
+            arr = signal.lfilter(b2, a2, arr)
             if len(arr) < box_width:
                 raise ValueError("The buffer_size used by the connector should "
                                  "be higher than box_width. buffer_size = "
