@@ -72,7 +72,7 @@ def stft(X, y=None, box_width=128, step=32, pad_width=0, kaiser_beta=14, include
         fft = np.fft.rfft(x, axis=0)
         psd = np.abs(fft)
         if log_mag:
-            psd = np.log(psd)
+            psd = np.log(psd+1)
 
         #freqs, psd = signal.welch(X[start:end,], axis=0)
         row = psd.flatten()
@@ -126,7 +126,7 @@ def wavelet_transform(X, sfreq=250, freqs=np.arange(8,12, 0.5), n_cycles=50, inc
 
     for i in range(cwt.shape[0]):
         if log_mag:
-            h.append(np.log(np.abs(cwt[i].T)))
+            h.append(np.log(np.abs(cwt[i].T)+1))
         else:
             h.append(np.abs(cwt[i].T))
 
