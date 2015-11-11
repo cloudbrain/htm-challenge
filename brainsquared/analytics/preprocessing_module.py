@@ -12,11 +12,11 @@ _ROUTING_KEY = "%s:%s:%s"
 
 # EEG electrodes placement
 _METADATA = {
-  "left": {
-    "main": "channel_3", "unused": ["channel_0", "channel_4", "channel_6"]
-    },
   "right": {
-    "main": "channel_5", "unused": ["channel_2", "channel_4", "channel_7"]
+    "main": "channel_6", "artifact": ["channel_4", "channel_5", "channel_7"]
+    },
+  "left": {
+    "main": "channel_0", "artifact": ["channel_1", "channel_2", "channel_3"]
     },
 }
 
