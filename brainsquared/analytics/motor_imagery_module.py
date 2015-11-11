@@ -1,6 +1,7 @@
 import simplejson as json
 import logging
 import time
+import numpy as np
 
 from htmresearch.frameworks.classification.utils.network_config import \
   generateNetworkPartitions
@@ -19,6 +20,8 @@ _ROUTING_KEY = "%s:%s:%s"
 
 # metric names conventions
 _MU = "mu"
+_MU_MIN = -6
+_MU_MAX = 1
 _TAG = "tag"
 _CLASSIFICATION = "classification"
 
@@ -43,6 +46,11 @@ class HTMMotorImageryModule(object):
                rmq_address,
                rmq_user,
                rmq_pwd):
+
+    self.stats = {
+      "left": {"min": None, "max": None},
+      "right": {"min": None, "max": None}
+      }
     self.module_id = module_id
     self.user_id = user_id
     self.device_type = device_type
@@ -62,7 +70,7 @@ class HTMMotorImageryModule(object):
     }
 
     self.start_time = int(time.time() * 1000)  # in ms
-    self.last_tag = {"timestamp": self.start_time, "value": _CATEGORIES[0]}
+    self.last_tag = {"timestamp": self.start_time, "value": _CATEGORIES[1]}
 
     self.classifiers = {"left": None, "right": None}
 
@@ -144,20 +152,27 @@ class HTMMotorImageryModule(object):
       results = {}
       for (hemisphere, classifier) in self.classifiers.items():
         mu_value = mu[hemisphere]
+        if mu_value > 0:
+          pass
+
         tag_value = self.last_tag["value"]
-        results[hemisphere] = classifier.classify(input_data=mu_value,
+        mu_clipped = np.clip(mu_value, _MU_MIN, _MU_MAX)
+        results[hemisphere] = classifier.classify(input_data=mu_clipped,
                                                   target=tag_value,
                                                   learning_is_on=True)
 
-      _LOGGER.debug("Raw results: %s" % results)
+        self._update_stats(hemisphere, mu_value)
+        #_LOGGER.debug(self.stats)
+      
+
       
       left_result = _CATEGORIES[int(results["left"])]
       right_result = _CATEGORIES[int(results["right"])]
-      
+      _LOGGER.debug("Raw results: %s" % results)      
       _LOGGER.debug("Human readable results: %s" % 
-                   {"left_electrode_class": left_result,
-                    "right_electrode_class": right_result})
-      
+                    {"left_electrode_class": left_result,
+                     "right_electrode_class": right_result})
+       
       classification_result = _reconcile_results(left_result,
                                                  right_result)
       
@@ -166,6 +181,26 @@ class HTMMotorImageryModule(object):
       self.classification_publisher.publish(self.routing_keys["classification"],
                                             buffer)
 
+
+  def _update_stats(self, hemisphere, mu_value):
+    """
+    Update stats.
+     self.stats = {
+      "left": {"min": None, "max": None},
+      "right": {"min": None, "max": None}
+      }
+    """
+    min_val = self.stats[hemisphere]["min"]
+    max_val = self.stats[hemisphere]["max"]
+    
+    if not min_val:
+      self.stats[hemisphere]["min"] = mu_value
+    if not max_val:
+      self.stats[hemisphere]["max"] = mu_value  
+    if mu_value < min_val:
+      self.stats[hemisphere]["min"] = mu_value
+    if mu_value > max_val:
+      self.stats[hemisphere]["max"] = mu_value  
 
 
 def _reconcile_results(left_result, right_result):
