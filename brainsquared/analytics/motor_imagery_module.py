@@ -20,8 +20,8 @@ _ROUTING_KEY = "%s:%s:%s"
 
 # metric names conventions
 _MU = "mu"
-_MU_MIN = -6
-_MU_MAX = 1
+_MU_MIN = 0
+_MU_MAX = 0.1
 _TAG = "tag"
 _CLASSIFICATION = "classification"
 
@@ -152,9 +152,6 @@ class HTMMotorImageryModule(object):
       results = {}
       for (hemisphere, classifier) in self.classifiers.items():
         mu_value = mu[hemisphere]
-        if mu_value > 0:
-          pass
-
         tag_value = self.last_tag["value"]
         mu_clipped = np.clip(mu_value, _MU_MIN, _MU_MAX)
         results[hemisphere] = classifier.classify(input_data=mu_clipped,
