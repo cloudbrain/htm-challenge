@@ -84,7 +84,7 @@ class PreprocessingModule(object):
     process = preprocess_stft(eeg, _METADATA)
     
     mu_left = process['left'][-1]
-    mu_right = process['left'][-1]
+    mu_right = process['right'][-1]
 
     data = {"timestamp": timestamp, "left": mu_left, "right": mu_right} 
     

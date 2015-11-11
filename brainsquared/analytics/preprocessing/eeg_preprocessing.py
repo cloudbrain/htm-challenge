@@ -300,7 +300,9 @@ def preprocess_stft(data, metadata, notch_filter=True,
 
 
 def write_arrs_to_files(out_dir, arrs, tagd):
-    for name, processed in arrs:
+    fnames = dict()
+    
+    for name, processed in arrs.items():
         out_fname = os.path.join(out_dir, '{}_test.csv'.format(name))
 
         f_writer = open(out_fname, 'w')
@@ -310,10 +312,10 @@ def write_arrs_to_files(out_dir, arrs, tagd):
         writer.writerow(['float', 'float', 'int'])
         writer.writerow(['', '', 'C'])
 
-        for i in xrange(decimated.shape[0]):
+        for i in xrange(processed.shape[0]):
             # mag, phase = cwt[i]
             mag = processed[i]
-            row = [timed[i], mag, int(tagd[i])]
+            row = [i, mag, tagd[i]]
             writer.writerow(row)
 
         f_writer.close()
