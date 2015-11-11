@@ -1,6 +1,8 @@
 import logging
 import json
 
+import numpy as np
+
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 from brainsquared.analytics.preprocessing.eeg_preprocessing import \
@@ -53,10 +55,11 @@ class PreprocessingModule(object):
 
     self.preprocessor = None
 
+    self.eeg_data = np.zeros((0,8))
 
   def initialize(self):
     """
-    Initialize EEG preprocessor, publisher, and subscriber 
+    Initialize EEG preprocessor, publisher, and subscriber
     """
     self.mu_publisher = PikaPublisher(self.rmq_address,
                                       self.rmq_user, self.rmq_pwd)
@@ -82,12 +85,11 @@ class PreprocessingModule(object):
     eeg = json.loads(body)
     timestamp = eeg[-1]["timestamp"]
     process = preprocess_stft(eeg, _METADATA)
-    
+
     mu_left = process['left'][-1]
     mu_right = process['right'][-1]
 
-    data = {"timestamp": timestamp, "left": mu_left, "right": mu_right} 
-    
+    data = {"timestamp": timestamp, "left": mu_left, "right": mu_right}
+
     _LOGGER.debug("--> mu: %s" % data)
     self.mu_publisher.publish(self.routing_keys[_MU], data)
-

@@ -149,6 +149,7 @@ def get_eye_blinks_ix(X, ica):
     sources = ica.transform(X)
     return np.argmax(stats.kurtosis(sources))
 
+
 def remove_eyeblinks(X, ica, eye_blinks_ix):
     means = ica.mean_.copy()
     mixing = ica.mixing_.copy()
@@ -160,6 +161,24 @@ def remove_eyeblinks(X, ica, eye_blinks_ix):
     return out
 
 
+class EyeBlinksRemover(object):
+    def __init__(self):
+        self._ica = None
+        self._eyeblink_ix = None
+
+    def fit(X):
+        self._ica = estimate_ica(X)
+        self._eyeblinks_ix = get_eye_blinks_ix(X, ica)
+        return self
+        
+    def transform(X):
+        return remove_eyeblinks(X, self._ica, self._eyeblinks_ix)
+
+    def fit_transform(X):
+        return self.fit(X).transform(X)
+
+
+    
 ## this is a separate function
 ## because in real time, it's better to do something like:
 ## - get some data (maybe 10-20 seconds worth?) with eyeblinks
@@ -171,10 +190,7 @@ def remove_eyeblinks(X, ica, eye_blinks_ix):
 ## we can re-estimate the ICA as new data streams in
 ## it's pretty fast
 def remove_eyeblinks_full(X):
-    ica = estimate_ica(X)
-    ix = get_eye_blinks_ix(X, ica)
-    return remove_eyeblinks(X, ica, ix)
-
+    return EyeBlinksRemover().fit_transform(X)
 
 
 
@@ -216,6 +232,16 @@ def get_raw_arrs(data, metadata):
     return out
 
 
+## assuming data is a series of dict() objects with
+## 'channel_0' through 'channel_7' as keys
+def get_raw(data):
+    channels = ['channel_{}'.format(i) for i in range(8)]
+    out = np.zeros((len(data),8))
+    for i, row in enumerate(data):
+        arr = [row[c] for c in channels]
+        out[i, :] = np.array(arr)
+    return out
+    
 # downsampling_factor: <float> (default value = 32)
 
 ## output
@@ -384,4 +410,5 @@ def preprocess_morlet_file(path_to_csv, metadata,
     return arrs, tagd
 
 
-## TODO: add ICA stuff to remove eye blinks here
+
+
