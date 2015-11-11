@@ -6,7 +6,7 @@ import numpy as np
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 from brainsquared.analytics.preprocessing.eeg_preprocessing import \
-  preprocess_stft
+  preprocess_stft, get_raw
 
 _ROUTING_KEY = "%s:%s:%s"
 
@@ -56,6 +56,9 @@ class PreprocessingModule(object):
     self.preprocessor = None
 
     self.eeg_data = np.zeros((0,8))
+    self.count = 0
+
+    self.eyeblinks_remover = EyeBlinksRemover()
 
   def initialize(self):
     """
@@ -81,8 +84,20 @@ class PreprocessingModule(object):
                                          self._preprocess)
 
 
+  def refit_ica(self):
+    self.eyeblinks_remover.fit(self.eeg_data[1000:])
+
   def _preprocess(self, ch, method, properties, body):
     eeg = json.loads(body)
+
+    self.eeg_data = np.vstack([self.eeg_data, get_raw(eeg)])
+    self.count += len(eeg)
+
+    if self.count == 3000 or self.count % 10000 == 0:
+      self.refit_ica()
+
+    eeg = from_raw(self.eyeblinks_remover.transform(get_raw(eeg)))
+
     timestamp = eeg[-1]["timestamp"]
     process = preprocess_stft(eeg, _METADATA)
 
@@ -93,3 +108,4 @@ class PreprocessingModule(object):
 
     _LOGGER.debug("--> mu: %s" % data)
     self.mu_publisher.publish(self.routing_keys[_MU], data)
+

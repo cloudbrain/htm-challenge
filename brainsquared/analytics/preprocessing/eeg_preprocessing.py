@@ -166,19 +166,22 @@ class EyeBlinksRemover(object):
         self._ica = None
         self._eyeblink_ix = None
 
-    def fit(X):
+    def fit(self, X):
         self._ica = estimate_ica(X)
-        self._eyeblinks_ix = get_eye_blinks_ix(X, ica)
+        self._eyeblinks_ix = get_eye_blinks_ix(X, self._ica)
         return self
-        
-    def transform(X):
-        return remove_eyeblinks(X, self._ica, self._eyeblinks_ix)
 
-    def fit_transform(X):
+    def transform(self, X):
+        if self._ica is not None:
+            return remove_eyeblinks(X, self._ica, self._eyeblinks_ix)
+        else:
+            return X # failsafe
+
+    def fit_transform(self, X):
         return self.fit(X).transform(X)
 
 
-    
+
 ## this is a separate function
 ## because in real time, it's better to do something like:
 ## - get some data (maybe 10-20 seconds worth?) with eyeblinks
@@ -241,7 +244,13 @@ def get_raw(data):
         arr = [row[c] for c in channels]
         out[i, :] = np.array(arr)
     return out
-    
+
+def from_raw(data):
+    channels = ['channel_{}'.format(i) for i in range(8)]
+    out = []
+    for i in xrange(data.shape[0]):
+        out.append(dict(zip(channels, data[i,:])))
+    return out
 # downsampling_factor: <float> (default value = 32)
 
 ## output
@@ -274,7 +283,7 @@ def preprocess_morlet(data, metadata, notch_filter=True, downsampling_factor=32,
             arr = signal.lfilter(b2, a2, arr)
 
         cwt = wavelet_transform(arr[:, np.newaxis], sfreq=sfreq, freqs=freqs,
-                                n_cycles=n_cycles, include_phase=False, 
+                                n_cycles=n_cycles, include_phase=False,
                                 log_mag=True)
 
         arr = cwt.mean(axis=1)
@@ -327,7 +336,7 @@ def preprocess_stft(data, metadata, notch_filter=True,
 
 def write_arrs_to_files(out_dir, arrs, tagd):
     fnames = dict()
-    
+
     for name, processed in arrs.items():
         out_fname = os.path.join(out_dir, '{}_test.csv'.format(name))
 
@@ -382,6 +391,9 @@ def preprocess_stft_file(path_to_csv, metadata,
     data = data[ignore_first:]
     tag = np.array([row['tag'] for row in data])
 
+    if remove_eyeblinks:
+        data = from_raw(remove_eyeblinks_full(get_raw(data)))
+
     arrs = preprocess_stft(data, metadata,
                     box_width=box_width, downsampling_factor=downsampling_factor,
                     sfreq=sfreq, low_f=low_f, high_f=high_f, kaiser_beta=kaiser_beta)
@@ -400,6 +412,9 @@ def preprocess_morlet_file(path_to_csv, metadata,
     data = data[ignore_first:]
     tag = np.array([row['tag'] for row in data])
 
+    if remove_eyeblinks:
+        data = from_raw(remove_eyeblinks_full(get_raw(data)))
+    
     arrs = preprocess_morlet(data, metadata,
                              box_width=box_width, downsampling_factor=downsampling_factor,
                              sfreq=sfreq, freqs=freqs, n_cycles=n_cycles)
@@ -408,7 +423,3 @@ def preprocess_morlet_file(path_to_csv, metadata,
     tagd = tag[::downsampling_factor][:N]
 
     return arrs, tagd
-
-
-
-
