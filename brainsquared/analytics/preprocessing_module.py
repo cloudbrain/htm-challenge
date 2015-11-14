@@ -126,7 +126,8 @@ class PreprocessingModule(object):
     data = {"timestamp": timestamp, "left": mu_left, "right": mu_right}
 
     _LOGGER.debug("--> mu: %s" % data)
-    self.mu_publisher.publish(self.routing_keys[_MU], data)
+    if self.eyeblinks_remover.fitted:
+      self.mu_publisher.publish(self.routing_keys[_MU], data)
     
     
 if __name__ == "__main__":
