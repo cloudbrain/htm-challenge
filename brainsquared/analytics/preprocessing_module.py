@@ -9,12 +9,29 @@ from brainsquared.analytics.preprocessing.eeg_preprocessing import \
 _ROUTING_KEY = "%s:%s:%s"
 
 # EEG electrodes placement
+# _METADATA = {
+#   "right": {
+#     "main": "channel_7", "artifact": ["channel_2", "channel_6", "channel_5"]
+#     },
+#   "left": {
+#     "main": "channel_3", "artifact": ["channel_0", "channel_1", "channel_2"]
+#     },
+# }
+# _METADATA = {
+#   "right": {
+#     "main": "channel_6", "artifact": ["channel_4", "channel_5", "channel_7"]
+#     },
+#   "left": {
+#     "main": "channel_0", "artifact": ["channel_1", "channel_2", "channel_3"]
+#     },
+# }
+
 _METADATA = {
   "right": {
-    "main": "channel_6", "artifact": ["channel_4", "channel_5", "channel_7"]
+    "main": "channel_2", "artifact": ["channel_0", "channel_3", "channel_5"]
     },
   "left": {
-    "main": "channel_0", "artifact": ["channel_1", "channel_2", "channel_3"]
+    "main": "channel_4", "artifact": ["channel_1", "channel_3", "channel_6"]
     },
 }
 
@@ -90,3 +107,22 @@ class PreprocessingModule(object):
     
     _LOGGER.debug("--> mu: %s" % data)
     self.mu_publisher.publish(self.routing_keys[_MU], data)
+    
+    
+if __name__ == "__main__":
+  
+  user_id = "brainsquared"
+  module_id = "module0"
+  device_type = "openbci"
+  _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
+  _RMQ_USER = "cloudbrain"
+  _RMQ_PWD = "cloudbrain"
+  
+  module = PreprocessingModule(user_id, 
+                               module_id, 
+                               device_type,
+                               _RMQ_ADDRESS,
+                               _RMQ_USER,
+                               _RMQ_PWD)
+  module.initialize()
+  module.start()
