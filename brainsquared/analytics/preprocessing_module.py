@@ -6,7 +6,9 @@ import numpy as np
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 from brainsquared.analytics.preprocessing.eeg_preprocessing import \
-  preprocess_stft, get_raw
+  preprocess_stft, get_raw, EyeBlinksRemover, from_raw
+
+from threading import Thread
 
 _ROUTING_KEY = "%s:%s:%s"
 
@@ -19,6 +21,8 @@ _METADATA = {
     "main": "channel_4", "artifact": ["channel_1", "channel_3", "channel_6"]
     },
 }
+
+
 
 # metric names conventions
 _EEG = "eeg"
@@ -37,7 +41,8 @@ class PreprocessingModule(object):
                device_type,
                rmq_address,
                rmq_user,
-               rmq_pwd):
+               rmq_pwd,
+               step_size):
     self.user_id = user_id
     self.module_id = module_id
     self.device_type = device_type
@@ -59,6 +64,10 @@ class PreprocessingModule(object):
     self.count = 0
 
     self.eyeblinks_remover = EyeBlinksRemover()
+
+    self.step_size = step_size
+
+    self.started_fit = False
 
   def initialize(self):
     """
@@ -85,20 +94,30 @@ class PreprocessingModule(object):
 
 
   def refit_ica(self):
-    self.eyeblinks_remover.fit(self.eeg_data[1000:])
+    t = Thread(target=self.eyeblinks_remover.fit, args=(self.eeg_data[1000:],))
+    t.start()
+    # self.eyeblinks_remover.fit(self.eeg_data[1000:])
 
   def _preprocess(self, ch, method, properties, body):
     eeg = json.loads(body)
 
     self.eeg_data = np.vstack([self.eeg_data, get_raw(eeg)])
-    self.count += len(eeg)
 
-    if self.count == 3000 or self.count % 10000 == 0:
+    # self.count += len(eeg)
+    self.count += self.step_size
+
+    print(self.count)
+    
+    if (self.count >= 5000 and not self.started_fit) or self.count % 10000 == 0:
+      _LOGGER.info('refitting...')
+      self.started_fit = True
       self.refit_ica()
 
-    eeg = from_raw(self.eyeblinks_remover.transform(get_raw(eeg)))
 
     timestamp = eeg[-1]["timestamp"]
+    
+    eeg = from_raw(self.eyeblinks_remover.transform(get_raw(eeg)))
+    
     process = preprocess_stft(eeg, _METADATA)
 
     mu_left = process['left'][-1]
@@ -118,13 +137,16 @@ if __name__ == "__main__":
   _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
   _RMQ_USER = "cloudbrain"
   _RMQ_PWD = "cloudbrain"
+
+  step_size = 32
   
   module = PreprocessingModule(user_id, 
                                module_id, 
                                device_type,
                                _RMQ_ADDRESS,
                                _RMQ_USER,
-                               _RMQ_PWD)
+                               _RMQ_PWD,
+                               step_size)
   module.initialize()
   module.start()
 

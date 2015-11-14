@@ -164,15 +164,17 @@ def remove_eyeblinks(X, ica, eye_blinks_ix):
 class EyeBlinksRemover(object):
     def __init__(self):
         self._ica = None
-        self._eyeblink_ix = None
+        self._eyeblinks_ix = None
+        self.fitted = False
 
     def fit(self, X):
         self._ica = estimate_ica(X)
         self._eyeblinks_ix = get_eye_blinks_ix(X, self._ica)
+        self.fitted = True
         return self
 
     def transform(self, X):
-        if self._ica is not None:
+        if self.fitted:
             return remove_eyeblinks(X, self._ica, self._eyeblinks_ix)
         else:
             return X # failsafe
