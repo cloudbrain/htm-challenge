@@ -1,7 +1,10 @@
-import simplejson as json
 import logging
 import time
+import csv
+
+import simplejson as json
 import numpy as np
+
 
 from htmresearch.frameworks.classification.utils.network_config import \
   generateNetworkPartitions
@@ -11,22 +14,30 @@ from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 
 from brainsquared.analytics.motor_imagery.htm_classifier import HTMClassifier
 
+
+with open("data/min_max.csv", "rb") as f:
+  reader = csv.reader(f)
+  reader.next()
+  reader.next()
+  reader.next()
+  _MU_MIN = float(reader.next()[1])
+  _MU_MAX = float(reader.next()[1])
+
 _LEARNING_IS_ON = True
 _NETWORK_CONFIG = "config/network_config.json"
-_TRAINING_DATA = "data/training_data.csv"
+_TRAINING_DATA = "data/min_max.csv"
 _TRAIN_SET_SIZE = 2000
 _PRE_TRAIN = False
 _ROUTING_KEY = "%s:%s:%s"
 
 # metric names conventions
 _MU = "mu"
-_MU_MIN = 0
-_MU_MAX = 0.1
 _TAG = "tag"
 _CLASSIFICATION = "classification"
 
 _CATEGORIES = ["baseline", "left", "right"]
 
+ 
 logging.basicConfig()
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
@@ -73,6 +84,9 @@ class HTMMotorImageryModule(object):
     self.last_tag = {"timestamp": self.start_time, "value": _CATEGORIES[1]}
 
     self.classifiers = {"left": None, "right": None}
+    self.numRecords = 0
+    self.learning_mode = True
+
 
   def initialize(self):
     """
@@ -135,6 +149,12 @@ class HTMMotorImageryModule(object):
   def _tag_and_classify(self, ch, method, properties, body):
     """Tag data and runs it through the classifier"""
     
+    self.numRecords += 1
+    print self.numRecords
+    if self.numRecords > 1000:
+      self.learning_mode = False
+      print "=======LEARNING DISABLED!!!========="
+      
     self.last_tag = self._update_last_tag(self.last_tag)
     _LOGGER.debug("[Module %s] mu: %s | last_tag: %s" % (self.module_id, body, 
                                                       self.last_tag))
@@ -143,40 +163,30 @@ class HTMMotorImageryModule(object):
     mu_timestamp = mu["timestamp"]
     tag_timestamp = self.last_tag["timestamp"]
 
-    # skip classification if tag and mu have more than 1s delay
-    skip_classification = False
-    #if abs(tag_timestamp * 1000 - mu_timestamp) > 1000000: # in micro seconds
-    #  skip_classification = True
-
-    if not skip_classification:
-      results = {}
-      for (hemisphere, classifier) in self.classifiers.items():
-        mu_value = mu[hemisphere]
-        tag_value = self.last_tag["value"]
-        mu_clipped = np.clip(mu_value, _MU_MIN, _MU_MAX)
-        results[hemisphere] = classifier.classify(input_data=mu_clipped,
-                                                  target=tag_value,
-                                                  learning_is_on=True)
-
-        self._update_stats(hemisphere, mu_value)
-        #_LOGGER.debug(self.stats)
+    results = {}
+    for (hemisphere, classifier) in self.classifiers.items():
+      mu_value = mu[hemisphere]
+      tag_value = self.last_tag["value"]
+      mu_clipped = np.clip(mu_value, _MU_MIN, _MU_MAX)
       
+      results[hemisphere] = classifier.classify(input_data=mu_clipped,
+                                                target=tag_value,
+                                                learning_is_on=self.learning_mode)
 
-      
-      left_result = _CATEGORIES[int(results["left"])]
-      right_result = _CATEGORIES[int(results["right"])]
-      _LOGGER.debug("Raw results: %s" % results)      
-      _LOGGER.debug("Human readable results: %s" % 
-                    {"left_electrode_class": left_result,
-                     "right_electrode_class": right_result})
-       
-      classification_result = _reconcile_results(left_result,
-                                                 right_result)
-      
-      buffer = [{"timestamp": mu_timestamp, "value": classification_result}]
+      self._update_stats(hemisphere, mu_value)
+      #_LOGGER.debug(self.stats)
+    
 
-      self.classification_publisher.publish(self.routing_keys["classification"],
-                                            buffer)
+    _LOGGER.debug("Raw results: %s" % results)      
+
+     
+    classification_result = _reconcile_results(results['left'],
+                                               results['right'])
+    
+    buffer = [{"timestamp": mu_timestamp, "value": classification_result}]
+
+    self.classification_publisher.publish(self.routing_keys["classification"],
+                                          buffer)
 
 
   def _update_stats(self, hemisphere, mu_value):
@@ -221,3 +231,20 @@ def _reconcile_results(left_result, right_result):
   else:
     return 0
       
+if __name__ == "__main__":
+  
+  user_id = "brainsquared"
+  module_id = "module1"
+  device_type = "openbci"
+  _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
+  _RMQ_USER = "cloudbrain"
+  _RMQ_PWD = "cloudbrain"
+  
+  module = HTMMotorImageryModule(user_id, 
+                               module_id, 
+                               device_type,
+                               _RMQ_ADDRESS,
+                               _RMQ_USER,
+                               _RMQ_PWD)
+  module.initialize()
+  module.start()

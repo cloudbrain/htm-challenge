@@ -3,7 +3,7 @@ import numpy
 from nupic.data.file_record_stream import FileRecordStream
 
 from htmresearch.frameworks.classification.classification_network import (
-  configureNetwork, runNetwork)
+  configureNetwork, trainNetwork)
 
 
 
@@ -43,10 +43,10 @@ class HTMClassifier(object):
 
     """
 
-    return runNetwork(self.network,
-                      self.network_config,
-                      partitions,
-                      training_set_size)
+    return trainNetwork(self.network,
+                        self.network_config,
+                        partitions,
+                        training_set_size)
 
 
   def classify(self, input_data, target, learning_is_on=True):
@@ -58,7 +58,7 @@ class HTMClassifier(object):
     @return classification_results: classification results.
     """
 
-    _disable_all_learning(self.network, learning_is_on)
+    _set_learning_mode(self.network, learning_is_on)
     return self._process_one_record(self.network, input_data, target)
 
 
@@ -76,15 +76,16 @@ class HTMClassifier(object):
       sensorRegion.setParameter("nextCategory", category)
 
     network.run(1)
-    return _getClassifierInference(network)
+    result = int(_getClassifierInference(network))
+    return self.categories[result]
 
 
 
-def _disable_all_learning(network, learning_is_on):
-  if learning_is_on:
-    return
-  else:
-    raise NotImplementedError("Disabling all learning is not yet implemented")
+def _set_learning_mode(network, learning_is_on):
+
+  network.regions["SP"].setParameter("learningMode", learning_is_on)
+  network.regions["TM"].setParameter("learningMode", learning_is_on)
+  network.regions["classifier"].setParameter("learningMode", learning_is_on)
 
 
 
