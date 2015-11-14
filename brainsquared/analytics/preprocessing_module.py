@@ -1,31 +1,16 @@
 import logging
 import json
 
+import numpy as np
+
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 from brainsquared.analytics.preprocessing.eeg_preprocessing import \
-  preprocess_stft
+  preprocess_stft, get_raw
 
 _ROUTING_KEY = "%s:%s:%s"
 
 # EEG electrodes placement
-# _METADATA = {
-#   "right": {
-#     "main": "channel_7", "artifact": ["channel_2", "channel_6", "channel_5"]
-#     },
-#   "left": {
-#     "main": "channel_3", "artifact": ["channel_0", "channel_1", "channel_2"]
-#     },
-# }
-# _METADATA = {
-#   "right": {
-#     "main": "channel_6", "artifact": ["channel_4", "channel_5", "channel_7"]
-#     },
-#   "left": {
-#     "main": "channel_0", "artifact": ["channel_1", "channel_2", "channel_3"]
-#     },
-# }
-
 _METADATA = {
   "right": {
     "main": "channel_2", "artifact": ["channel_0", "channel_3", "channel_5"]
@@ -70,10 +55,14 @@ class PreprocessingModule(object):
 
     self.preprocessor = None
 
+    self.eeg_data = np.zeros((0,8))
+    self.count = 0
+
+    self.eyeblinks_remover = EyeBlinksRemover()
 
   def initialize(self):
     """
-    Initialize EEG preprocessor, publisher, and subscriber 
+    Initialize EEG preprocessor, publisher, and subscriber
     """
     self.mu_publisher = PikaPublisher(self.rmq_address,
                                       self.rmq_user, self.rmq_pwd)
@@ -95,16 +84,28 @@ class PreprocessingModule(object):
                                          self._preprocess)
 
 
+  def refit_ica(self):
+    self.eyeblinks_remover.fit(self.eeg_data[1000:])
+
   def _preprocess(self, ch, method, properties, body):
     eeg = json.loads(body)
+
+    self.eeg_data = np.vstack([self.eeg_data, get_raw(eeg)])
+    self.count += len(eeg)
+
+    if self.count == 3000 or self.count % 10000 == 0:
+      self.refit_ica()
+
+    eeg = from_raw(self.eyeblinks_remover.transform(get_raw(eeg)))
+
     timestamp = eeg[-1]["timestamp"]
     process = preprocess_stft(eeg, _METADATA)
-    
+
     mu_left = process['left'][-1]
     mu_right = process['right'][-1]
 
-    data = {"timestamp": timestamp, "left": mu_left, "right": mu_right} 
-    
+    data = {"timestamp": timestamp, "left": mu_left, "right": mu_right}
+
     _LOGGER.debug("--> mu: %s" % data)
     self.mu_publisher.publish(self.routing_keys[_MU], data)
     
@@ -126,3 +127,4 @@ if __name__ == "__main__":
                                _RMQ_PWD)
   module.initialize()
   module.start()
+
