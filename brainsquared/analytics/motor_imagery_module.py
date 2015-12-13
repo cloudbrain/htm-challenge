@@ -2,10 +2,7 @@ import logging
 import time
 import csv
 
-try:
-  import simplejson as json
-except ImportError:
-  import json
+import simplejson
 import numpy as np
 
 
@@ -47,7 +44,7 @@ _LOGGER.setLevel(logging.DEBUG)
 
 
 with open(_NETWORK_CONFIG, "rb") as jsonFile:
-  network_config = json.load(jsonFile)
+  network_config = simplejson.load(jsonFile)
 partitions = generateNetworkPartitions(network_config, _TRAIN_SET_SIZE)
 
 
