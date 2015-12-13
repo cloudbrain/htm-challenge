@@ -2,7 +2,10 @@ import logging
 import time
 import csv
 
-import simplejson as json
+try:
+  import simplejson as json
+except ImportError:
+  import json
 import numpy as np
 
 
