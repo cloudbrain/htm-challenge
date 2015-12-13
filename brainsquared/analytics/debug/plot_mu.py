@@ -3,7 +3,7 @@ import csv
 
 plt.figure()
 
-filePath = "mu/left_test.csv"
+filePath = "../mu/left_test.csv"
 
 timesteps = []
 data = []
