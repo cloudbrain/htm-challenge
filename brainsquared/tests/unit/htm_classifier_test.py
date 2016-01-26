@@ -19,7 +19,7 @@ class HTMClassifierTest(unittest.TestCase):
       self.network_config = simplejson.load(jsonFile)
     self.classifier = HTMClassifier(self.network_config, _TRAINING_DATA, 
                                     _CATEGORIES)
-    self.classifier.initialize()
+    self.classifier.connect()
 
   def testTrainingAccuracy(self):
     partitions = generateNetworkPartitions(self.network_config, _TRAIN_SET_SIZE)

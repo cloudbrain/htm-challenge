@@ -2,7 +2,8 @@ import logging
 import time
 import csv
 
-import simplejson
+#import simplejson
+import json
 import numpy as np
 
 
@@ -30,6 +31,98 @@ _TRAIN_SET_SIZE = 2000
 _PRE_TRAIN = False
 _ROUTING_KEY = "%s:%s:%s"
 
+_N_CONFIG = {
+  "sensorRegionConfig": {
+    "regionEnabled": True,
+    "regionName": "sensor",
+    "regionType": "py.CustomRecordSensor",
+    "regionParams": {
+      "verbosity": 1,
+      "numCategories": 3
+    },
+    "encoders": {
+      "scalarEncoder": {
+        "name": "scalarEncoder",
+        "fieldname": "y",
+        "type": "ScalarEncoder",
+        "n": 256,
+        "w": 21,
+        "minval": None,
+        "maxval": None
+      }
+    }
+  },
+  "spRegionConfig": {
+    "regionEnabled": True,
+    "regionName": "SP",
+    "regionType": "py.SPRegion",
+    "regionParams": {
+      "spVerbosity": 0,
+      "spatialImp": "cpp",
+      "globalInhibition": 1,
+      "columnCount": 2048,
+      "numActiveColumnsPerInhArea": 40,
+      "seed": 1956,
+      "potentialPct": 0.8,
+      "synPermConnected": 0.1,
+      "synPermActiveInc": 0.0001,
+      "synPermInactiveDec": 0.0005,
+      "maxBoost": 1.0
+    }
+  },
+  "tmRegionConfig": {
+    "regionEnabled": True,
+    "regionName": "TM",
+    "regionType": "py.TPRegion",
+    "regionParams": {
+      "verbosity": 0,
+      "columnCount": 2048,
+      "cellsPerColumn": 32,
+      "seed": 1960,
+      "temporalImp": "tm_py",
+      "newSynapseCount": 20,
+      "maxSynapsesPerSegment": 32,
+      "maxSegmentsPerCell": 128,
+      "initialPerm": 0.21,
+      "permanenceInc": 0.1,
+      "permanenceDec": 0.1,
+      "globalDecay": 0.0,
+      "maxAge": 0,
+      "minThreshold": 9,
+      "activationThreshold": 12,
+      "outputType": "normal",
+      "pamLength": 3
+    }
+  },
+  "tpRegionConfig": {
+    "regionEnabled": False,
+    "regionName": "TP",
+    "regionType": "py.TemporalPoolerRegion",
+    "regionParams": {
+      "poolerType": "union",
+      "columnCount": 512,
+      "activeOverlapWeight": 1.0,
+      "predictedActiveOverlapWeight": 10.0,
+      "maxUnionActivity": 0.20,
+      "synPermPredActiveInc": 0.1,
+      "synPermPreviousPredActiveInc": 0.1,
+      "decayFunctionType": "NoDecay"
+    }
+  },
+  "classifierRegionConfig": {
+    "regionEnabled": True,
+    "regionName": "classifier",
+    "regionType": "py.CLAClassifierRegion",
+    "regionParams": {
+      "steps": "0",
+      "implementation": "cpp",
+      "maxCategoryCount": 3,
+      "clVerbosity": 0
+    }
+  }
+}
+
+
 # metric names conventions
 _MU = "mu"
 _TAG = "tag"
@@ -43,13 +136,15 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
 
 
-with open(_NETWORK_CONFIG, "rb") as jsonFile:
-  network_config = simplejson.load(jsonFile)
+#with open(_NETWORK_CONFIG, "rb") as jsonFile:
+#  network_config = simplejson.load(jsonFile)
+network_config = _N_CONFIG # TODO: temp fix for offline work
 partitions = generateNetworkPartitions(network_config, _TRAIN_SET_SIZE)
 
 
 
 class HTMMotorImageryModule(object):
+  
   def __init__(self,
                user_id,
                module_id,
@@ -88,7 +183,7 @@ class HTMMotorImageryModule(object):
     self.learning_mode = True
 
 
-  def initialize(self):
+  def connect(self):
     """
     Initialize classifier, publisher (classification), and subscribers (mu 
     and tag)
@@ -99,7 +194,7 @@ class HTMMotorImageryModule(object):
     self.classifiers["right"] = HTMClassifier(network_config, _TRAINING_DATA,
                                               _CATEGORIES)
     for classifier in self.classifiers.values():
-      classifier.initialize()
+      classifier.connect()
       if _PRE_TRAIN:
         classifier.train(_TRAIN_SET_SIZE, partitions)
 
@@ -230,21 +325,3 @@ def _reconcile_results(left_result, right_result):
     return 1
   else:
     return 0
-      
-if __name__ == "__main__":
-  
-  user_id = "brainsquared"
-  module_id = "module1"
-  device_type = "openbci"
-  _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
-  _RMQ_USER = "cloudbrain"
-  _RMQ_PWD = "cloudbrain"
-  
-  module = HTMMotorImageryModule(user_id, 
-                               module_id, 
-                               device_type,
-                               _RMQ_ADDRESS,
-                               _RMQ_USER,
-                               _RMQ_PWD)
-  module.initialize()
-  module.start()

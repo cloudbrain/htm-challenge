@@ -30,7 +30,7 @@ _MU = "mu"
 
 logging.basicConfig()
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.DEBUG)
+_LOGGER.setLevel(logging.INFO)
 
 
 
@@ -41,8 +41,7 @@ class PreprocessingModule(object):
                device_type,
                rmq_address,
                rmq_user,
-               rmq_pwd,
-               step_size):
+               rmq_pwd):
     self.user_id = user_id
     self.module_id = module_id
     self.device_type = device_type
@@ -65,11 +64,19 @@ class PreprocessingModule(object):
 
     self.eyeblinks_remover = EyeBlinksRemover()
 
-    self.step_size = step_size
+    self.step_size = 32
 
     self.started_fit = False
+    
+  def configure(self, step_size):
+    """
+    Module specific params.
+    @param step_size: (int) STFT step size
+    """
+    self.step_size = step_size
+    
 
-  def initialize(self):
+  def connect(self):
     """
     Initialize EEG preprocessor, publisher, and subscriber
     """
@@ -94,7 +101,7 @@ class PreprocessingModule(object):
 
 
   def refit_ica(self):
-    t = Thread(target=self.eyeblinks_remover.fit, args=(self.eeg_data[1000:],))
+    t = Thread(target=self.eyeblinks_remover.fit, args=(self.eeg_data,))
     t.start()
     # self.eyeblinks_remover.fit(self.eeg_data[1000:])
 
@@ -105,8 +112,6 @@ class PreprocessingModule(object):
 
     # self.count += len(eeg)
     self.count += self.step_size
-
-    print(self.count)
     
     if (self.count >= 5000 and not self.started_fit) or self.count % 10000 == 0:
       _LOGGER.info('refitting...')
@@ -127,26 +132,5 @@ class PreprocessingModule(object):
 
     _LOGGER.debug("--> mu: %s" % data)
     self.mu_publisher.publish(self.routing_keys[_MU], data)
-    
-    
-if __name__ == "__main__":
-  
-  user_id = "brainsquared"
-  module_id = "module0"
-  device_type = "openbci"
-  _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
-  _RMQ_USER = "cloudbrain"
-  _RMQ_PWD = "cloudbrain"
 
-  step_size = 32
-  
-  module = PreprocessingModule(user_id, 
-                               module_id, 
-                               device_type,
-                               _RMQ_ADDRESS,
-                               _RMQ_USER,
-                               _RMQ_PWD,
-                               step_size)
-  module.initialize()
-  module.start()
 

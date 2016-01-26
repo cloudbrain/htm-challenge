@@ -50,7 +50,7 @@ def create_module(user_id):
                                          _RMQ_ADDRESS,
                                          _RMQ_USER,
                                          _RMQ_PWD)
-    preproc_module.initialize()
+    preproc_module.connect()
     thread = Thread(target=preproc_module.start)
     thread.start()
     modules[user_id][module_id] = preproc_module
@@ -62,7 +62,7 @@ def create_module(user_id):
                                    _RMQ_ADDRESS,
                                    _RMQ_USER,
                                    _RMQ_PWD)
-    htm_mi_module.initialize()
+    htm_mi_module.connect()
     thread = Thread(target=htm_mi_module.start)
     thread.start()
     modules[user_id][module_id] = htm_mi_module

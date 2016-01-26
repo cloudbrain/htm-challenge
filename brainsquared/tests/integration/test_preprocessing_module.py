@@ -20,6 +20,6 @@ preproc_module = PreprocessingModule(user_id,
                                      _RMQ_USER,
                                      _RMQ_PWD)
 
-preproc_module.initialize()
+preproc_module.connect()
 preproc_module.start()
 

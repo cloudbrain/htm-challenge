@@ -237,9 +237,15 @@ def get_raw_arrs(data, metadata):
     return out
 
 
-## assuming data is a series of dict() objects with
-## 'channel_0' through 'channel_7' as keys
 def get_raw(data):
+    """
+    Transform rabbitMQ format to matrix.
+    Assuming data is a series of dict() objects with
+    'channel_0' through 'channel_7' as keys
+    
+    @param data: 
+    @return: 
+    """
     channels = ['channel_{}'.format(i) for i in range(8)]
     out = np.zeros((len(data),8))
     for i, row in enumerate(data):
