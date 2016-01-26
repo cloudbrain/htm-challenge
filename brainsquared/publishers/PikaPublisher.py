@@ -48,25 +48,3 @@ class PikaPublisher(PublisherInterface):
                                                delivery_mode=2,
                                                # makes the message persistent
                                              ))
-
-
-if __name__ == "__main__":
-  
-  host = "rabbitmq.cloudbrain.rocks"
-  username = "cloudbrain"
-  pwd = "cloudbrain"
-  
-  user = "test"
-  device = "openbci"
-  metric = "mu"
-  routing_key = "%s:%s:%s" % (user, device, metric)
-  
-  pub = PikaPublisher(host, username, pwd)
-  pub.connect()
-  pub.register(routing_key)
-  
-  while 1:
-    try:
-      pub.publish(routing_key, {"timestamp": 0, "value": 0})
-    except KeyboardInterrupt:
-      pub.disconnect()
