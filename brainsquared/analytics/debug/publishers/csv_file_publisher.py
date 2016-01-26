@@ -3,7 +3,7 @@ import time
 
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 
-bufer_size = 128
+buffer_size = 128
 csvFile = "data/motor_data.csv"
 
 host = "localhost"
@@ -27,10 +27,10 @@ data_buffer = []
 rewindCounter = 0
 print "[DEBUG] Publishing data to '%s' on queue '%s'" % (host, str(routing_key))
 while 1:
-  time.sleep(0.001)
+  time.sleep(0.0001)
   try:
     row = csvReader.next()
-    if len(data_buffer) < bufer_size:
+    if len(data_buffer) < buffer_size:
       data_buffer.append(dict(zip(headers, row[:-1])))
     else:
       pub.publish(routing_key, data_buffer)
