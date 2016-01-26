@@ -7,9 +7,9 @@ HTM Challenge 2015
 Install `htmresearch`. We need that to be able to use the classification 
 network factory.
 ```
-git clone https://github.com/numenta/nupic.research.git
+git clone https://github.com/marionleborgne/nupic.research.git
 cd nupic.research
-python setup.py develop --user
+python setup.py install --user
 ```
 
 Check that it's been installed correctly:

@@ -10,8 +10,8 @@ def _print_message(ch, method, properties, body):
 
 if __name__ == "__main__":
   host = "localhost"
-  username = "cloudbrain"
-  pwd = "cloudbrain"
+  username = "guest"
+  pwd = "guest"
 
   user = "brainsquared"
   device = "openbci"

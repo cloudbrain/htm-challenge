@@ -6,8 +6,8 @@ if __name__ == "__main__":
   _MODULE_ID = "module0"
   _DEVICE_TYPE = "openbci"
   _RMQ_ADDRESS = "localhost"
-  _RMQ_USER = "cloudbrain"
-  _RMQ_PWD = "cloudbrain"
+  _RMQ_USER = "guest"
+  _RMQ_PWD = "guest"
 
   _STEP_SIZE = 32
 
