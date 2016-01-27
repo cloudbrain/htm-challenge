@@ -5,7 +5,7 @@ import unittest
 from htmresearch.frameworks.classification.utils.network_config import \
   generateNetworkPartitions
 
-from brainsquared.analytics.htm_classifier import HTMClassifier
+from brainsquared.modules.htm_classifier import HTMClassifier
 
 _TRAIN_SET_SIZE = 2000
 _NTWK_CONFIG = "config/network_config.json"
