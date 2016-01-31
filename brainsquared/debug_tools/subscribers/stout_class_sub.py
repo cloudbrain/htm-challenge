@@ -6,14 +6,7 @@ def _print_message(ch, method, properties, body):
   # print ch, method, properties, body
   buffer = json.loads(body)
   for data in buffer:
-    print ("attention: %s | meditation: %s | "
-           "signal quality: %s | lowAlpha: %s |"
-           "highAlpha: %s") % (data["attention"],
-                                    data["meditation"],
-                                    data["poorSignalLevel"],
-                                    data["lowAlpha"],
-                                    data["highAlpha"])
-
+    print data
 
 if __name__ == "__main__":
   host = "rabbitmq.cloudbrain.rocks"
@@ -30,8 +23,8 @@ if __name__ == "__main__":
   # routing_key = "%s:%s:%s" % (user, device, metric)
   
   user = "brainsquared"
-  device = "neurosky"
-  metric = "eeg"
+  device = "module1"
+  metric = "classification"
   routing_key = "%s:%s:%s" % (user, device, metric)
 
   sub = PikaSubscriber(host, username, pwd)

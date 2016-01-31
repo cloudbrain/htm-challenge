@@ -1,3 +1,5 @@
+ROUTING_KEY = "%s:%s:%s"
+
 # Database info
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 SENSOR_DATA_KEYSPACE = "sensor_data"
@@ -137,7 +139,7 @@ DEVICE_METADATA = [
         'metric_description': None
       },
       {
-        'metric_name': 'concentration',
+        'metric_name': 'attention',
         'num_channels': 1,
         'metric_description': None
       },

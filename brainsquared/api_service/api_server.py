@@ -4,9 +4,9 @@ from threading import Thread
 
 from flask import Flask, request
 
-from brainsquared.modules.motor_imagery.motor_imagery_module import \
+from brainsquared.modules.classifiers.MotorImageryModule import \
   HTMMotorImageryModule
-from brainsquared.modules.preprocessing.preprocessing_module import \
+from brainsquared.modules.filters.PreprocessingModule import \
   PreprocessingModule
 
 

@@ -9,7 +9,7 @@ from brainsquared.utils.metadata import get_num_channels
 class MockPublisher(object):
   def __init__(self, user, device, metric):
     self.routing_key = "%s:%s:%s" % (user, device, metric)
-    self.num_channels = get_num_channels(device, metric)
+    self.num_channels = 2 #get_num_channels(device, metric)
     self.pub = None
 
 
@@ -24,13 +24,14 @@ class MockPublisher(object):
 
     print "Publishing on queue: {}".format(self.routing_key)
 
-    data = {"timestamp": int(time.time() * 1000)}
-    for i in xrange(self.num_channels):
-      data["channel_%s" % i] = random.random() * 10
-
     data_buffer = []
     while 1:
-      time.sleep(0.0001)
+      
+      data = {"timestamp": int(time.time() * 1000)}
+      for i in xrange(self.num_channels):
+        data["channel_%s" % i] = random.random() * 100
+      
+      time.sleep(0.01)
       if len(data_buffer) < buffer_size:
         data_buffer.append(data)
       else:
@@ -41,7 +42,11 @@ class MockPublisher(object):
 
 
 if __name__ == "__main__":
-  BUFFER_SIZE = 128
+  BUFFER_SIZE = 10
+
+  # HOST = "rabbitmq.cloudbrain.rocks"
+  # USERNAME = "cloudbrain"
+  # PWD = "cloudbrain"
 
   HOST = "localhost"
   USERNAME = "guest"

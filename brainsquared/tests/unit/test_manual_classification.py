@@ -37,7 +37,7 @@ from htmresearch.frameworks.classification.utils.network_config import \
 from htmresearch.frameworks.classification.classification_network import \
   _getClassifierInference
 
-from brainsquared.modules.motor_imagery.htm_classifier import HTMClassifier
+from brainsquared.modules.classifiers.htm_classifier import HTMClassifier
 
 # Parameters to generate the artificial sensor data
 OUTFILE_NAME = "white_noise"

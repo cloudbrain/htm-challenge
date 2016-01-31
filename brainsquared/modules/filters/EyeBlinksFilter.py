@@ -1,13 +1,13 @@
 import logging
 import json
-
 import numpy as np
+import uuid
 
 from brainsquared.utils.metadata import get_num_channels
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
-from brainsquared.modules.preprocessing.eeg_preprocessing import \
-  preprocess_stft, get_raw, EyeBlinksRemover, from_raw
+from brainsquared.modules.filters.eeg_preprocessing import (
+  preprocess_stft, get_raw, EyeBlinksRemover, from_raw)
 
 from threading import Thread
 
@@ -22,13 +22,14 @@ _LOGGER.setLevel(logging.INFO)
 class PreprocessingModule(object):
   def __init__(self,
                user_id,
-               module_id,
                device_type,
                rmq_address,
                rmq_user,
                rmq_pwd):
+
+    self.module_id = str(uuid.uuid4())
+    
     self.user_id = user_id
-    self.module_id = module_id
     self.device_type = device_type
     self.rmq_address = rmq_address
     self.rmq_user = rmq_user
@@ -36,9 +37,10 @@ class PreprocessingModule(object):
 
     self.input_metric = None
     self.output_metric = None
+    self.enable_ica = False
+
     self.eeg_subscriber = None
     self.mu_publisher = None
-
     self.routing_keys = None
     self.preprocessor = None
 
@@ -55,7 +57,7 @@ class PreprocessingModule(object):
 
 
   def configure(self, step_size, electrodes_placement, input_metric,
-                output_metric):
+                output_metric, enable_ica=False):
     """
     Module specific params.
     @param step_size: (int) STFT step size
@@ -89,12 +91,15 @@ class PreprocessingModule(object):
       More about Laplacian filtering: http://sccn.ucsd.edu/wiki/Flt_laplace  
     @param input_metric: (string) name of the input metric.
     @param output_metric: (string) name of the output metric.
+    @param enable_ica: (boolean) if 1, enable ICA pre-processing. This will 
+      remove eye blinks. 
     """
     self.step_size = step_size
     self.electrodes_placement = electrodes_placement
     self.input_metric = input_metric
     self.output_metric = output_metric
-    
+    self.enable_ica = enable_ica
+
 
   def connect(self):
     """
@@ -113,14 +118,14 @@ class PreprocessingModule(object):
     if self.output_metric is None:
       raise ValueError("Output metric can't be none. "
                        "Use configure() to set it.")
-    
+
     self.routing_keys = {
       self.input_metric: _ROUTING_KEY % (self.user_id, self.device_type,
                                          self.input_metric),
       self.output_metric: _ROUTING_KEY % (self.user_id, self.device_type,
                                           self.output_metric)
     }
-    
+
     self.mu_publisher = PikaPublisher(self.rmq_address,
                                       self.rmq_user, self.rmq_pwd)
     self.eeg_subscriber = PikaSubscriber(self.rmq_address,
@@ -152,18 +157,17 @@ class PreprocessingModule(object):
     self.eeg_data = np.vstack([self.eeg_data, get_raw(eeg, self.num_channels)])
 
     self.count += self.step_size
-    
-    if (self.count >= 5000 and not self.started_fit) or self.count % 10000 == 0:
-      _LOGGER.info('refitting...')
-      self.started_fit = True
-      self.refit_ica()
-
 
     timestamp = eeg[-1]["timestamp"]
 
-    eeg = from_raw(self.eyeblinks_remover.transform(get_raw(eeg,
-                                                            self.num_channels)),
-                   self.num_channels)
+    if self.enable_ica:
+      eeg = from_raw(self.eyeblinks_remover.transform(
+          get_raw(eeg, self.num_channels)), self.num_channels)
+      if ((self.count >= 5000 and not self.started_fit)
+          or self.count % 10000 == 0):
+        _LOGGER.info('refitting...')
+        self.started_fit = True
+        self.refit_ica()
 
     processed_data = preprocess_stft(eeg, self.electrodes_placement)
 

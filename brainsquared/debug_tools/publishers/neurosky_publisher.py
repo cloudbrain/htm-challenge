@@ -3,18 +3,10 @@ from consider import Consider
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 
 
-def get_tag(p, attention_threshold):
-  if p.attention > attention_threshold:
-    tag = 1
-  else:
-    tag = 0
-  return tag
-
-
-def get_raw_eeg(p):
+def get_attention(p):
   timestamp = int(time.time() * 1000)
-  raw_eeg_record = {"timestamp": timestamp, "channel_0": None}
-  return  raw_eeg_record
+  data = {"timestamp": timestamp, "channel_0": p.attention}
+  return data
 
 
 if __name__ == "__main__":
@@ -26,7 +18,7 @@ if __name__ == "__main__":
   
   user = "brainsquared"
   device = "neurosky"
-  metric = "eeg"
+  metric = "attention"
   routing_key = "%s:%s:%s" % (user, device, metric)
   
   buffer_size = 128
@@ -41,16 +33,18 @@ if __name__ == "__main__":
   print "Ready to publish data to '%s' on queue '%s'" % (host, str(routing_key))
   print "Waiting for BCI headset signal ..."
   for p in con.packet_generator():
+    print "==> Signal quality: {}".format(p.poor_signal)
+    
     if p.poor_signal == 0:
-      
-      tag = get_tag(p, attention_threshold)
-      raw_eeg = get_raw_eeg(p)
+      print "Got good signal!"
+      data = get_attention(p)
       
       if len(data_buffer) > buffer_size:
         pub.publish(routing_key, data_buffer)
+        print "--> Published {}".format(data_buffer)
         data_buffer = []
       else:
-        data_buffer.append(raw_eeg)
+        data_buffer.append(data)
     else:
       print "no signal yet"
   

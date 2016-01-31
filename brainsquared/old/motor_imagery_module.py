@@ -2,8 +2,7 @@ import logging
 import time
 import csv
 
-#import simplejson
-import json
+import simplejson
 import numpy as np
 
 
@@ -13,7 +12,7 @@ from htmresearch.frameworks.classification.utils.network_config import \
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 
-from brainsquared.modules.motor_imagery.htm_classifier import HTMClassifier
+from brainsquared.modules.classifiers.htm_classifier import HTMClassifier
 
 
 with open("data/min_max.csv", "rb") as f:
@@ -128,9 +127,9 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
 
 
-#with open(_NETWORK_CONFIG, "rb") as jsonFile:
-#  network_config = simplejson.load(jsonFile)
-network_config = _N_CONFIG # TODO: temp fix for offline work
+with open(_NETWORK_CONFIG, "rb") as jsonFile:
+  network_config = simplejson.load(jsonFile)
+#network_config = _N_CONFIG 
 partitions = generateNetworkPartitions(network_config, _TRAIN_SET_SIZE)
 
 
@@ -257,7 +256,7 @@ class HTMMotorImageryModule(object):
       (meth_frame, header_frame, body) = self.tag_subscriber.get_one_message(
         self.routing_keys["tag"])
       if body:
-        last_tag = json.loads(body)
+        last_tag = simplejson.loads(body)
       else:
         return last_tag
   

@@ -2,12 +2,13 @@
 
 import numpy as np
 import pandas as pd
-from preprocess_eeg import wavelet_transform, remove_eyeblinks_full
+from brainsquared.modules.transformers.SFFT import wavelet_transform, \
+    remove_eyeblinks_full
 
 import csv
 
-in_fname = '../data/motor_data.csv'
-out_fname = '../data/mu_motor_data.csv'
+in_fname = 'motor_data.csv'
+out_fname = 'mu_motor_data.csv'
 
 # ignore first n values, while EEG adjusts to baseline
 ignore_first = 1100
