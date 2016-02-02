@@ -21,12 +21,12 @@ class SubscriberInterface(object):
 
 
   @abstractmethod
-  def subscribe(self, routing_key):
+  def register(self, routing_key):
     pass
 
 
   @abstractmethod
-  def consume_messages(self, routing_key, callback):
+  def subscribe(self, routing_key, callback):
     pass
 
 

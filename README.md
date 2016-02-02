@@ -9,7 +9,7 @@ network factory.
 ```
 git clone https://github.com/marionleborgne/nupic.research.git
 cd nupic.research
-python setup.py develop --user
+python setup.py install --user
 ```
 
 Check that it's been installed correctly:

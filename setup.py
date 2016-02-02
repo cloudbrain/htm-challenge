@@ -28,5 +28,5 @@ setup(name="brainsquared",
       url="https://github.com/CloudbrainLabs/htm-challenge",
       packages=find_packages(),
       install_requires=findRequirements(),
-      dependency_links = depLinks,
-     )
+      dependency_links = depLinks, requires=['numpy']
+      )

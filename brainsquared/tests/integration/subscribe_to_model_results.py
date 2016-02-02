@@ -12,7 +12,7 @@ routing_key = "%s:%s:%s" % (user, device, metric)
 
 sub = PikaSubscriber(host, username, pwd)
 sub.connect()
-sub.subscribe(routing_key)
+sub.register(routing_key)
 
 def _print_message(ch, method, properties, body):
   print body

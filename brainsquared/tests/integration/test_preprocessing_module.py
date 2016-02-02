@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-from brainsquared.analytics.preprocessing_module import PreprocessingModule
+from brainsquared.modules.preprocessing_module import PreprocessingModule
 
 
 _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
@@ -20,6 +20,6 @@ preproc_module = PreprocessingModule(user_id,
                                      _RMQ_USER,
                                      _RMQ_PWD)
 
-preproc_module.initialize()
-preproc_module.start()
+preproc_module.connect()
+preproc_module.subscribe()
 
