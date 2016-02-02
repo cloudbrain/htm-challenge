@@ -5,10 +5,13 @@ __pycache__/
 # C extensions
 *.so
 
+# JetBrains
+.idea/*
+
 # Distribution / packaging
 .Python
 env/
-build/
+./build/
 develop-eggs/
 dist/
 downloads/
@@ -55,3 +58,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# WebStorm
+.idea/
+
+# Frontend
+brainsquared/frontend/node_modules/
