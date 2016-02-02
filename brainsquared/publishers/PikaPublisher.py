@@ -23,7 +23,7 @@ class PikaPublisher(PublisherInterface):
     credentials = pika.PlainCredentials(self.user, self.password)
 
     self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-      host=self.host, credentials=credentials))
+        host=self.host, credentials=credentials))
 
 
   def disconnect(self):
@@ -45,6 +45,6 @@ class PikaPublisher(PublisherInterface):
                                              routing_key=routing_key,
                                              body=json.dumps(data),
                                              properties=pika.BasicProperties(
-                                               delivery_mode=2,
-                                               # makes the message persistent
+                                                 delivery_mode=2,
+                                                 # makes the message persistent
                                              ))

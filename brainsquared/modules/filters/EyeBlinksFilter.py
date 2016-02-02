@@ -7,7 +7,7 @@ from brainsquared.utils.metadata import get_num_channels
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 from brainsquared.modules.filters.eeg_preprocessing import (
-  preprocess_stft, get_raw, EyeBlinksRemover, from_raw)
+  preprocess_stft, get_raw, EyeBlinksFilter, from_raw)
 
 from threading import Thread
 
@@ -25,7 +25,9 @@ class PreprocessingModule(object):
                device_type,
                rmq_address,
                rmq_user,
-               rmq_pwd):
+               rmq_pwd,
+               input_metrics,
+               output_metrics):
 
     self.module_id = str(uuid.uuid4())
     
@@ -34,10 +36,8 @@ class PreprocessingModule(object):
     self.rmq_address = rmq_address
     self.rmq_user = rmq_user
     self.rmq_pwd = rmq_pwd
-
-    self.input_metric = None
-    self.output_metric = None
-    self.enable_ica = False
+    self.input_metrics = None
+    self.output_metrics = None
 
     self.eeg_subscriber = None
     self.mu_publisher = None
@@ -48,16 +48,17 @@ class PreprocessingModule(object):
     self.eeg_data = np.zeros((0, self.num_channels))
     self.count = 0
 
-    self.eyeblinks_remover = EyeBlinksRemover()
-
-    self.started_fit = False
+    self.eyeblinks_remover = EyeBlinksFilter()
 
     self.step_size = None
     self.electrodes_placement = None
+    self.enable_ica = False
+    
+    self.started_fit = False
 
 
-  def configure(self, step_size, electrodes_placement, input_metric,
-                output_metric, enable_ica=False):
+
+  def configure(self, step_size, electrodes_placement, enable_ica=False):
     """
     Module specific params.
     @param step_size: (int) STFT step size
@@ -135,15 +136,15 @@ class PreprocessingModule(object):
     self.mu_publisher.connect()
 
     self.mu_publisher.register(self.routing_keys[self.output_metric])
-    self.eeg_subscriber.subscribe(self.routing_keys[self.input_metric])
+    self.eeg_subscriber.register(self.routing_keys[self.input_metric])
 
 
   def start(self):
     _LOGGER.info("[Module %s] Starting Preprocessing. Routing "
                  "keys: %s" % (self.module_id, self.routing_keys))
 
-    self.eeg_subscriber.consume_messages(self.routing_keys[self.input_metric],
-                                         self._preprocess)
+    self.eeg_subscriber.subscribe(self.routing_keys[self.input_metric],
+                                  self._preprocess)
 
 
   def refit_ica(self):

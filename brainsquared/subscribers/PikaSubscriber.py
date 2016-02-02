@@ -15,10 +15,10 @@ class PikaSubscriber(SubscriberInterface):
   def connect(self):
     credentials = pika.PlainCredentials(self.user, self.password)
     self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-      host=self.host, credentials=credentials))
+        host=self.host, credentials=credentials))
 
 
-  def subscribe(self, routing_key):
+  def register(self, routing_key):
     channel = self.connection.channel()
     channel.exchange_declare(exchange=routing_key,
                              type='direct')
@@ -38,9 +38,9 @@ class PikaSubscriber(SubscriberInterface):
     self.connection.close()
 
 
-  def consume_messages(self, routing_key, callback):
+  def subscribe(self, routing_key, callback):
     channel = self.channels[routing_key][0]
-    queue_name =  self.channels[routing_key][1]
+    queue_name = self.channels[routing_key][1]
 
     channel.basic_consume(callback,
                           queue=queue_name,
@@ -50,10 +50,8 @@ class PikaSubscriber(SubscriberInterface):
     channel.start_consuming()
 
 
-
   def get_one_message(self, routing_key):
     channel = self.channels[routing_key][0]
-    queue_name =  self.channels[routing_key][1]
+    queue_name = self.channels[routing_key][1]
     meth_frame, header_frame, body = channel.basic_get(queue_name)
     return (meth_frame, header_frame, body)
-

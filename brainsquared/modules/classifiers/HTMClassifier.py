@@ -20,7 +20,7 @@ _LOGGER.setLevel(logging.DEBUG)
 
 
 
-class HTMClassifierModule(object):
+class HTMClassifier(object):
   def __init__(self,
                user_id,
                device_type,
@@ -46,7 +46,7 @@ class HTMClassifierModule(object):
     @param input_metrics: (list) name of the input metric.
     @param output_metrics (list)  name of the output metric.
     """
-    self.module_id = HTMClassifierModule.__name__
+    self.module_id = HTMClassifier.__name__
 
     self.user_id = user_id
     self.device_type = device_type
@@ -148,9 +148,9 @@ class HTMClassifierModule(object):
     self.input_metric_subscriber.connect()
     self.output_metric_publisher.connect()
 
-    self.tag_subscriber.subscribe(self.routing_keys[self.tag_metric])
+    self.tag_subscriber.register(self.routing_keys[self.tag_metric])
     self.classification_publisher.register(self.routing_keys[self.tag_metric])
-    self.input_metric_subscriber.subscribe(self.routing_keys[self.input_metric])
+    self.input_metric_subscriber.register(self.routing_keys[self.input_metric])
     self.output_metric_publisher.register(self.routing_keys[self.output_metric])
 
 
@@ -176,7 +176,7 @@ class HTMClassifierModule(object):
     _LOGGER.info("[Module %s] Starting Motor Imagery module. Routing keys: %s"
                  % (self.module_id, self.routing_keys))
 
-    self.input_metric_subscriber.consume_messages(
+    self.input_metric_subscriber.subscribe(
         self.routing_keys[self.input_metric],
         self._tag_and_classify)
 

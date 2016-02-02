@@ -1,6 +1,6 @@
-NETWORK_PATH = "motor_imagery/models/motor_imagery"
+NETWORK_PATH = "models/motor_imagery"
 NUM_RECORDS = 58829
-TRAINING_FILE = "motor_imagery/data/raw_neurosky_converted.csv"
+TRAINING_FILE = "raw_neurosky_converted.csv"
 MINVAL = -3000
 MAXVAL = 3000
 NETWORK_CONFIG = {

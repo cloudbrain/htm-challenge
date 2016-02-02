@@ -8,16 +8,16 @@ if __name__ == "__main__":
   _RMQ_ADDRESS = "localhost"
   _RMQ_USER = "guest"
   _RMQ_PWD = "guest"
-  
+
   # Module configuration
-  _INPUT_METRICS = {"metric_to_classify": "eeg", "label_metric": "NA"}
-  _OUTPUT_METRICS = {"result_metric": "classification"}
-  _ATTENTION_THRESHOLD = 40
-  _MEDITATION_THRESHOLD = 60
+  _INPUT_METRICS = {"input": "mindwave", "input_label": "NA"}
+  _OUTPUT_METRICS = {"classification_result": "classification"}
+  _ATTENTION_THRESHOLD = 70
+  _MEDITATION_THRESHOLD = 30
   _THRESHOLDS = {
-    "channel_0": _ATTENTION_THRESHOLD,
-    "channel_1": _MEDITATION_THRESHOLD
-    }
+    "channel_0": _MEDITATION_THRESHOLD,
+    "channel_1": _ATTENTION_THRESHOLD
+  }
 
   module = ThresholdClassifier(_USER_ID,
                                _DEVICE_TYPE,

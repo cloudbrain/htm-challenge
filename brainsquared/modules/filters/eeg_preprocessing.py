@@ -160,7 +160,7 @@ def remove_eyeblinks(X, ica, eye_blinks_ix):
     return out
 
 
-class EyeBlinksRemover(object):
+class EyeBlinksFilter(object):
     def __init__(self):
         self._ica = None
         self._eyeblinks_ix = None
@@ -194,7 +194,7 @@ class EyeBlinksRemover(object):
 ## we can re-estimate the ICA as new data streams in
 ## it's pretty fast
 def remove_eyeblinks_full(X):
-    return EyeBlinksRemover().fit_transform(X)
+    return EyeBlinksFilter().fit_transform(X)
 
 
 def get_raw_arrs(data, metadata):

@@ -58,11 +58,11 @@ if __name__ == "__main__":
 
   tag_subscriber = PikaSubscriber(host, username, pwd)
   tag_subscriber.connect()
-  tag_subscriber.subscribe(tag_routing_key)
+  tag_subscriber.register(tag_routing_key)
 
   eeg_subscriber = PikaSubscriber(host, username, pwd)
   eeg_subscriber.connect()
-  eeg_subscriber.subscribe(eeg_routing_key)
+  eeg_subscriber.register(eeg_routing_key)
 
   f_out = open(file_name, 'w')
   writer = csv.DictWriter(f_out, fieldnames=fieldnames)
@@ -70,9 +70,9 @@ if __name__ == "__main__":
 
   tag = 0
 
-  t1 = threading.Thread(target=tag_subscriber.consume_messages,
+  t1 = threading.Thread(target=tag_subscriber.subscribe,
                         args=(tag_routing_key, consume_tag,))
-  t2 = threading.Thread(target=eeg_subscriber.consume_messages,
+  t2 = threading.Thread(target=eeg_subscriber.subscribe,
                         args=(eeg_routing_key, consume_eeg,))
 
   t1.start()

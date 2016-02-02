@@ -25,11 +25,11 @@ if __name__ == "__main__":
                                _DEVICE_TYPE,
                                _RMQ_ADDRESS,
                                _RMQ_USER,
-                               _RMQ_PWD)
+                               _RMQ_PWD,
+                              _INPUT_METRIC,
+                               _OUTPUT_METRIC, )
   module.configure(_STEP_SIZE, 
                    _ELECTRODES_PLACEMENT, 
-                   _INPUT_METRIC,
-                   _OUTPUT_METRIC, 
                    _ENABLE_ICA)
   module.connect()
-  module.start()
+  module.subscribe()

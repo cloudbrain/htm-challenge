@@ -21,5 +21,5 @@ preproc_module = PreprocessingModule(user_id,
                                      _RMQ_PWD)
 
 preproc_module.connect()
-preproc_module.start()
+preproc_module.subscribe()
 
