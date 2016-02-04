@@ -32,15 +32,16 @@
       };
 
       Octopicorn.prototype.start = function (callback) {
-        var stream = this.stream = new RtDataStream('http://localhost:31415/rt-stream', 'module1', 'brainsquared');
+        var stream = this.stream = new RtDataStream('http://localhost:31415/websocket', 'wildcard', 'brainsquared');
         self = this;
         stream.connect(
           function open(){
             console.log('Realtime Connection Open');
             stream.subscribe('classification', function(msg) {
-              if(msg.value !== 0){
-                self.step(msg.value/10);
-                Accuracy.step(msg.value/10);
+              if(msg.channel_0 !== -1){
+                var direction = msg.channel_0 === 0 ? 'left' : 'right';
+                self.step(msg.channel_0/10, direction);
+                Accuracy.step(msg.channel_0/10, direction);
               }
             });
           },

@@ -59,8 +59,5 @@ docs/_build/
 # PyBuilder
 target/
 
-# WebStorm
-.idea/
-
 # Frontend
 brainsquared/frontend/node_modules/
