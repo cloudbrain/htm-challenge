@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from brainsquared.modules.transformers.SFFT import wavelet_transform, \
+from brainsquared.modules.filters.eeg_preprocessing import wavelet_transform, \
     remove_eyeblinks_full
 
 import csv
@@ -21,7 +21,8 @@ vals = vals[ignore_first:, :] # ignore first values
 
 X = remove_eyeblinks_full(vals)
 
-cwt = wavelet_transform(X[:, :1], sfreq=250, freqs=[10], n_cycles=50, include_phase=True, log_mag=False)
+cwt = wavelet_transform(X[:, :1], sfreq=250, freqs=[10], n_cycles=50, 
+                        include_phase=True, log_mag=False)
 
 tag = vals[:, -1]
 
