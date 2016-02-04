@@ -52,8 +52,8 @@ CLOUDBRAIN_PASSWORD = 'guest'
 #CLOUDBRAIN_PASSWORD = 'cloudbrain'
 
 PUBLISHER_USERNAME = 'brainsquared'
-PUBLISHER_DEVICE = 'neurosky'
-PUBLISHER_METRIC = 'eeg'
+PUBLISHER_DEVICE = 'wildcard'
+PUBLISHER_METRIC = 'motor_imagery'
 
 #class neurosky_publisher(QtCore.QThread):
 class neurosky_publisher(threading.Thread):
@@ -421,7 +421,6 @@ if __name__ == "__main__":
 			publisher_metric = each[ len("--publisher_metric="): ]
 	
 	#app = QtCore.QCoreApplication(sys.argv)
-	
 	publisher = neurosky_publisher( \
 				log, \
 				#server_interface=server_interface, \
