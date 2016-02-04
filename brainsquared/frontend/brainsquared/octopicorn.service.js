@@ -38,7 +38,7 @@
           function open(){
             console.log('Realtime Connection Open');
             stream.subscribe('classification', function(msg) {
-              if(msg.channel_0 !== -1){
+              if(msg.channel_0 !== 2){
                 var direction = msg.channel_0 === 0 ? 'left' : 'right';
                 self.step(msg.channel_0/10, direction);
                 Accuracy.step(msg.channel_0/10, direction);

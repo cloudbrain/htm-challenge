@@ -28,8 +28,8 @@ if __name__ == "__main__":
   pwd = "guest"
 
   user = "brainsquared"
-  device = "neurosky"
-  metric = "mindwave"
+  device = "wildcard"
+  metric = "motor_imagery"
   routing_key = "%s:%s:%s" % (user, device, metric)
 
   sub = PikaSubscriber(host, username, pwd)
