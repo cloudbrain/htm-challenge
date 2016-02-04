@@ -3,7 +3,7 @@ HTM Challenge 2015
 
 ## Setup
 
-### NuPIC
+### NuPIC Research
 Install `htmresearch`. We need that to be able to use the classification 
 network factory.
 ```
@@ -35,11 +35,62 @@ python setup.py develop --user
 ```
 
 ### Frontend
-`npm install`  
 
-`gulp`
+```
+cd brainsquared/frontend
+npm install  
+gulp
+```
 
-You'll also need to run Cloudbrain's rt_server.
+### Websocket server
+The wesocket server subscribes to RabbitMQ and open websocket(s) for the client
+ UI.
+
+```
+cd brainsquared/websocket_server
+python websocket_server.py
+ 
+```
+
+
+## Publish data with the Neurosky
+
+Publish with the 
+* publisher_metric: `motor_imagery`, 
+* publisher_user: `brainsquared`,  
+* publisher_device: `wildcard` 
+
+The publisher device is `wildcard` because you can publish data with any 
+device as long as you publish data in this format: 
+
+```
+  [
+    {
+      "timestamp": <int>,
+      "channel_0": <float>,
+        ...
+      "channel_N": <float>
+    },
+    
+    ...
+    
+    {
+      "timestamp": <int>,
+      "channel_0": <float>,
+         ...
+      "channel_N": <float>
+     } 
+  ]
+```
+
+Start the publisher with:
+
+```
+python neurosky_publisher.py --server_host=localhost --server_username=guest \
+--server_password=guest --publisher_user=brainsquared \
+publisher_device=wildcard --publisher_metric=motor_imagery \
+--device=/dev/tty.MindWaveMobile-DevA
+```
 
 
 ## What it does
