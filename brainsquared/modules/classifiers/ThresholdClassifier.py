@@ -193,8 +193,13 @@ class ThresholdClassifier(ClassifierModuleAbstract):
       # -1 means "do nothing". Any other index means the chanel with this index 
       # wins.
       if sum_activated_thresholds == 0:
-        # Nothing to 1. So do nothing.
-        classification = -1
+        # Nothing to 1. So do nothing (i.e. class = neutral)
+        # NOTE: by convention neutral is equal to num_channels. So if you 
+        # have 2 channels (channel_0 and channel 1) then:
+        # - Channel_0 wins => classification = 0 
+        # - Channel_1 wins => classification = 1
+        # - No channel win => classification = 2  (= num_channels) 
+        classification = self.input_metric_num_channels  
       elif sum_activated_thresholds == 1:
         # Only one channel to 1
         classification = active_channel
