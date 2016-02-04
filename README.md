@@ -55,10 +55,40 @@ python websocket_server.py
 
 ## Publish data with the Neurosky
 
+Publish with the 
+* publisher_metric: `motor_imagery`, 
+* publisher_user: `brainsquared`,  
+* publisher_device: `wildcard` 
+
+The publisher device is `wildcard` because you can publish data with any 
+device as long as you publish data in this format: 
+
+```
+  [
+    {
+      "timestamp": <int>,
+      "channel_0": <float>,
+        ...
+      "channel_N": <float>
+    },
+    
+    ...
+    
+    {
+      "timestamp": <int>,
+      "channel_0": <float>,
+         ...
+      "channel_N": <float>
+     } 
+  ]
+```
+
+Start the publisher with:
+
 ```
 python neurosky_publisher.py --server_host=localhost --server_username=guest \
 --server_password=guest --publisher_user=brainsquared \
-publisher_device=neurosky --publisher_metric=mindwave \
+publisher_device=wildcard --publisher_metric=motor_imagery \
 --device=/dev/tty.MindWaveMobile-DevA
 ```
 
