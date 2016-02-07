@@ -49,11 +49,10 @@ Make sure you have node, npm, and gulp installed.
 ```
 cd brainsquared/frontend
 npm install  
+bower install
 ```
 
-
 ## Run the app
-
 
 ## Frontend
 ```
@@ -104,4 +103,12 @@ This reads from the serialized model and classify the incoming data stream.
 ```
 cd brainsquared/module_runners
 python sklearn_classifier_runner.py
+```
+
+### [Optional] Print the output data
+An easy way to debug is to use the stdout module to subscribte to a metric and 
+print out the data.
+```
+cd brainsquared/module_runners
+python stdout_sink_runner.py
 ```
