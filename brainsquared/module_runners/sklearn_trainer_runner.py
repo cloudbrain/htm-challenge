@@ -88,7 +88,7 @@ def train_classifier(device, metric, num_categories, classifier_type):
 if __name__ == "__main__":
   _DEVICE = "neurosky"
   _METRIC = "attention"
-  _NUM_CATEGORIES = 2
+  _NUM_CATEGORIES = 2  # [0, 1]
   _CLASSIFIER_TYPE = "svm"
 
   clf_path, score = train_classifier(

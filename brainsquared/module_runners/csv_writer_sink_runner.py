@@ -9,7 +9,7 @@ if __name__ == "__main__":
   _RMQ_PWD = "guest"
 
   # Module configuration
-  _INPUT_METRICS = {"input": "attention"}
+  _INPUT_METRICS = {"input": "attention"}  # fft
   _OUTPUT_METRICS = None  # It's a sink module. So not output metrics allowed.
 
   _TIME_OFFSET = 2000  # 2s
