@@ -1,3 +1,6 @@
+sklearn
+tornado
+sockjs
 pika==0.10.0
 simplejson==3.6.5
 flask==0.10.0

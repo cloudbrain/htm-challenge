@@ -66,8 +66,7 @@ class ClassifierModuleAbstract(ModuleAbstract):
                                                    output_metrics,
                                                    module_id)
 
-    # Keeping track of input/output metrics and they keys specific to 
-    # Classifier modules.
+    # Keeping track of input/output metrics and their keys
     self.tag_metric = None
     self.input_metric = None
     self.output_metric = None
@@ -76,24 +75,26 @@ class ClassifierModuleAbstract(ModuleAbstract):
     self.input_metric_key = "input"
     self.output_metric_key = "classification_result"
     
+    self._validate_metrics()
+    
 
   def _validate_metrics(self):
     """Validate input and output metrics and initialize them accordingly."""
 
-    if self.tag_metric_key in self.input_metrics:
-      self.tag_metric = self.input_metrics[self.tag_metric_key]
+    if self.tag_metric_key in self._input_metrics:
+      self.tag_metric = self._input_metrics[self.tag_metric_key]
     else:
       raise KeyError("The input metric '%s' is not set!" 
                      % self.tag_metric_key)
 
-    if self.input_metric_key in self.input_metrics:
-      self.input_metric = self.input_metrics[self.input_metric_key]
+    if self.input_metric_key in self._input_metrics:
+      self.input_metric = self._input_metrics[self.input_metric_key]
     else:
       raise KeyError("The input metric '%s' is not set!" 
                      % self.input_metric_key)
 
-    if self.output_metric_key in self.output_metrics:
-      self.output_metric = self.output_metrics[self.output_metric_key]
+    if self.output_metric_key in self._output_metrics:
+      self.output_metric = self._output_metrics[self.output_metric_key]
     else:
       raise KeyError("The output metric '%s' is not set!" 
                      % self.output_metric_key)
