@@ -22,14 +22,15 @@
         magnitude = magnitude || 1;
         direction = direction || 'right';
         var stepSize = direction == 'right' ? magnitude : magnitude * -1;
-        if(this.sprite.position.x > -4.1 && this.sprite.position.x < 4.1) {
+
+        if(this.sprite.position.x + stepSize < -3.8) {
+          this.sprite.position.setX(-3.8);
+        }else if(this.sprite.position.x + stepSize > 3.8){
+          this.sprite.position.setX(3.8);
+        }else{
           this.sprite.position.setX(this.sprite.position.x + stepSize);
-        }else if(this.sprite.position.x <= -4.1) {
-          this.sprite.position.setX(-3.9);
-        }else if(this.sprite.position.x >= 4.1) {
-          this.sprite.position.setX(3.9);
         }
-      };
+     };
 
       Octopicorn.prototype.start = function (callback) {
         var stream = this.stream = new RtDataStream
