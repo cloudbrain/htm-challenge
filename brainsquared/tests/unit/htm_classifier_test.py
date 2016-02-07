@@ -31,8 +31,8 @@ class HTMClassifierTest(unittest.TestCase):
   def testClassificationAccuracy(self):
     mu = 7
     tag = "middle"
-    result = self.classifier.classify(input_data=mu, target=tag, 
-                                  learning_is_on=True)
+    result = self.classifier.start(input_data=mu, target=tag,
+                                   learning_is_on=True)
     print "classification_result: %s" % result
 
 

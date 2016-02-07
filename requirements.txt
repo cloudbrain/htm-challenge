@@ -1,5 +1,8 @@
-pika==0.10.0
+scikit-learn==0.16
+tornado==4.3
+sockjs-tornado==1.0.2
+pika==0.10
 simplejson==3.6.5
 flask==0.10.0
 mne==0.10.0
-numpy
+numpy==1.9.2

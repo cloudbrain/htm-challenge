@@ -1,0 +1,12 @@
+{
+  "source": "./src",
+  "destination": "./docs",
+  "access": ["public"],
+  "autoPrivate": true,
+  "unexportIdentifier": false,
+  "undocumentIdentifier": true,
+  "builtinExternal": true,
+  "index": "./README.md",
+  "package": "./package.json",
+  "includeSource": true
+}

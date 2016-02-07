@@ -153,8 +153,8 @@ class TestSensorDataClassification(unittest.TestCase):
                   inputData = float(row[1])
                   points.append(inputData)
                   target = int(row[2])
-                  result = classifier.classify(inputData, target,
-                                               learning_is_on=False)
+                  result = classifier.start(inputData, target,
+                                            learning_is_on=False)
                   sensorRegion.setParameter("useDataSource", True)
                   net.run(1)
                   result2 = CATEGORIES[int(_getClassifierInference(

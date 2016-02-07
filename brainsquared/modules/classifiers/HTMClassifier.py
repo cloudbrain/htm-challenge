@@ -165,7 +165,7 @@ class HTMClassifier(object):
     self._network.save(self.trained_network_path)
 
 
-  def classify(self):
+  def start(self):
     """Get data from rabbitMQ and classify input data"""
 
     if self._network is None:
