@@ -1,9 +1,17 @@
 # htm-challenge
 HTM Challenge 2015
 
+## What it does
+Collect EEG data (i.e. brainwaves) and classify your mental states. One common mental state that is often classified is motor imagery, that is to say imagined motor movements (e.g moving your hand left or right). By classifying data from the motor cortex we can extract controls to interact with the physical/digital world.
+
+[x](https://raw.github.com/cloudbrainlabs/htm-challenge/master/docs/brainsquared.png)
+
+Move the unicorn left and right with your mind to catch the rainbows. The 
+machine learning algorithm is learning from your brainwave patterns.
+
 ## Setup
 
-### NuPIC Research
+### NuPIC Research (OPTIONAL - Only required for the HTM classifier)
 Install `htmresearch`. We need that to be able to use the classification 
 network factory.
 ```
@@ -17,6 +25,12 @@ Check that it's been installed correctly:
 $ python
 >>> from htmresearch.frameworks.classification.classification_network import createNetwork
 ... # success!
+```
+
+### RabbitMQ
+On OSX, install with `brew`:
+```
+brew install rabbitmq
 ```
 
 ### BrainSquared
@@ -36,39 +50,70 @@ python setup.py develop --user
 
 ### Frontend
 
+Make sure you have node, npm, and gulp installed. 
 ```
 cd brainsquared/frontend
 npm install  
+bower install
+```
+
+## Run the app
+
+## Frontend
+```
+cd brainsquared/frontend
 gulp
 ```
 
-### Websocket server
-The wesocket server subscribes to RabbitMQ and open websocket(s) for the client
+### Start RabbitMQ
+
+```
+rabbitmq-server start
+```
+
+### Start the websocket server
+The websocket server subscribes to RabbitMQ and open websocket(s) for the client
  UI.
  
 ```
-cd brainsquared/websocket_server
-python websocket_server.py 
+cd brainsquared/module_runners
+python websocket_sink_runner.py 
 ```
 
 
-## Publish data with the Neurosky
-
-Publish with the 
-* publisher_metric: `attention` (or another metric like `eeg` or `meditation`), 
-* publisher_user: `brainsquared`,  
-* publisher_device: `neurosky` 
-
-In `brainquared/services/`
+### Publish data with the Neurosky
 
 ```
-python neurosky_source_module_runner.py --server_host=localhost 
---server_username=guest \
---server_password=guest --publisher_user=brainsquared \
-publisher_device=neurosky --publisher_metric=attention \
---device=/dev/tty.MindWaveMobile-DevA
+cd brainsquared/module_runners
+python neurosky_source_runner.py  --server_host=localhost --server_username=guest --server_password=guest --publisher_user=brainsquared --publisher_device=neurosky --publisher_metric=mindwave --device=/dev/tty.MindWaveMobile-DevA
 ```
 
+### Train a model
 
-## What it does
-Collect EEG data (i.e. brainwaves) and classify your mental states. One common mental state that is often classified is motor imagery, that is to say imagined motor movements (e.g moving your hand left or right). By classifying data from the motor cortex we can extract controls to interact with the physical/digital world.
+#### Collect and tag data
+```
+cd brainsquared/module_runners
+python csv_writer_sink_runner.py
+```
+> NOTE: you might need to update the `_TAG` value in `csv_writer_sink_runner.py`
+
+#### Train a model
+```
+cd brainsquared/module_runners
+python sklearn_trainer_runner.py
+```
+
+### Start the classifier
+This reads from the serialized model and classify the incoming data stream.
+```
+cd brainsquared/module_runners
+python sklearn_classifier_runner.py
+```
+
+### [Optional] Print the output data
+An easy way to debug is to use the stdout module to subscribte to a metric and 
+print out the data.
+```
+cd brainsquared/module_runners
+python stdout_sink_runner.py
+```
