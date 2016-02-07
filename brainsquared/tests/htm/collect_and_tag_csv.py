@@ -6,6 +6,8 @@ import csv
 import logging
 import json
 import sys
+import time
+import threading
 
 from brainsquared.subscribers.PikaSubscriber import PikaSubscriber
 from brainsquared.utils.metadata import get_supported_devices
@@ -22,11 +24,11 @@ _DEVICE = "wildcard"
 _METRIC = "motor_imagery"
 
 _ROUTING_KEY = "%s:%s:%s"
-_CSV_FILE = "data/training-data[%s].csv"
+_CSV_FILE = "data/training-data-%(tag)s-%(channel)s.csv"
 _SUPPORTED_DEVICES = get_supported_devices()
 
-_ROW_OFFSET = 2000
-_NUM_ROWS = 10000
+_TIME_OFFSET = 2000  # 2s
+_RECORDING_TIME = 10000  # 10s
 
 
 
@@ -63,9 +65,9 @@ def get_args_parser():
   parser.add_argument('-t', '--tag',
                       required=True,
                       help="The tag of the data that will be recorded.")
-  
+
   parser.add_argument('-n', '--nupic',
-                      default=False,
+                      default=True,
                       help="Make CSV compliant with the NuPIC format (add "
                            "two CSV headeres: types and flags).")
 
@@ -82,63 +84,58 @@ def get_opts():
 
 class CSVWriter(object):
   """Handles the logic to write, convert, and tag data"""
-  
+
+
   def __init__(self, tag, channels, convert_to_nupic):
+    self.start_time = int(time.time() * 1000)
     self.tag = tag
     self.convert_to_nupic = convert_to_nupic
-    self.out_file = _CSV_FILE % tag
-    self.csv_writer = csv.writer(open(self.out_file, "wb"))
     self.channels = channels
-    self.headers = []
-    self.counter = 0
+    self.row_counter = 0
+    self.csv_writers = {
+      channel: csv.writer(open(_CSV_FILE % {"tag": tag, 
+                                            "channel": channel}, "wb"))
+      for channel in self.channels}
 
-    # convert channel names to channel_X, except for the timestamp.
-    self.headers.append("timestamp")
-    if "timestamp" in self.channels:
-      self.channels.pop("timestamp")
-    for channel in self.channels:
-      self.headers.append("channel_%s" % self.channels.index(channel))
-    self.headers.append("label")
-
+    headers = ["x", "y", "label"]
+    flags = ["", "", "C"]
+    types = ["int", "float", "int"]
     # first rows of the file
-    self.csv_writer.writerow(self.headers)
-
-    if self.convert_to_nupic:
-      types = ["int"]  # timestamp
-      for _ in self.channels:
-        types.append("float")  # channel values
-      types.append("int")  # category
-      self.csv_writer.writerow(types)
-  
-      flags = [""]  # timestamp
-      for _ in self.channels:
-        flags.append("")  # channel values
-      flags.append("C")  # category
-      self.csv_writer.writerow(flags)
+    for channel in self.channels:
+      csv_writer = self.csv_writers[channel]
+      csv_writer.writerow(headers)
+      if self.convert_to_nupic:
+        csv_writer.writerow(types)
+        csv_writer.writerow(flags)
 
 
-  def write_csv(self, ch, method, properties, body):
+  def write_csv_files(self, ch, method, properties, body):
 
     buffer = json.loads(body)
     for data in buffer:
       _LOGGER.debug(data)
-      # print data["poorSignalLevel"]
-      
-      if self.counter > _ROW_OFFSET:
-        row = []
-        if "timestamp" not in data.keys():
-          row.append(self.counter)
-        else:
-          row.append(data["timestamp"])
+      _LOGGER.debug("poorSignalLevel")
+
+      now = int(time.time() * 1000)
+      if now > _TIME_OFFSET:
 
         for channel_name in self.channels:
-          row.append(data[channel_name])
-        row.append(self.tag)
-        self.csv_writer.writerow(row)
-        _LOGGER.info("Wrote row: %s" % row)
+          writer = self.csv_writers[channel_name]
+          row = []
 
-      self.counter += 1
-      if self.counter == _NUM_ROWS:
+          if "timestamp" not in data.keys():
+            row.append(self.row_counter)
+          else:
+            row.append(int(data["timestamp"]))
+
+          row.append(float(data[channel_name]))
+          row.append(int(self.tag))
+          writer.writerow(row)
+          _LOGGER.info("Wrote row: %s" % row)
+
+        self.row_counter += 1
+
+      if now > _RECORDING_TIME + self.start_time:
         sys.exit(1)
 
 
@@ -153,7 +150,7 @@ if __name__ == "__main__":
   metric = opts.metric
   channels = json.loads(opts.channels)
   tag = int(opts.tag)
-  convert_to_nupic = bool(opts.nupic) 
+  convert_to_nupic = bool(opts.nupic)
   routing_key = _ROUTING_KEY % (user, device, metric)
 
   sub = PikaSubscriber(host, username, pwd)
@@ -164,8 +161,4 @@ if __name__ == "__main__":
                % (routing_key, host))
 
   csv_writer = CSVWriter(tag, channels, convert_to_nupic)
-  while 1:
-    try:
-      sub.subscribe(routing_key, csv_writer.write_csv)
-    except KeyboardInterrupt:
-      sub.disconnect()
+  sub.subscribe(routing_key, csv_writer.write_csv_files)

@@ -1,8 +1,8 @@
 ## Prerequisites
 * Start RabbitMQ
-* Publish data to RabbitMQ. For example with `neurosky_publisher.py`:
+* Publish data to RabbitMQ. For example with `NeuroskySource.py`:
 ```
- python neurosky_publisher.py --server_host=localhost --server_username=guest --server_password=guest --publisher_user=brainsquared --publisher_device=wildcard --publisher_metric=motor_imagery --device=/dev/tty.MindWaveMobile-DevA
+ python NeuroskySource.py --server_host=localhost --server_username=guest --server_password=guest --publisher_user=brainsquared --publisher_device=wildcard --publisher_metric=motor_imagery --device=/dev/tty.MindWaveMobile-DevA
 ```
 
 ## Collect and label CSV data

@@ -2,6 +2,7 @@ import json
 import logging
 import time
 
+from brainsquared.utils.metadata import get_num_channels
 from brainsquared.modules.classifiers.ClassifierModuleAbstract \
   import ClassifierModuleAbstract
 
@@ -59,15 +60,16 @@ class ThresholdClassifier(ClassifierModuleAbstract):
                                               output_metrics,
                                               module_id)
 
+    self.num_input_channels = get_num_channels(device_type, self.input_metric)
+
     # Set when configure() is called.
     self.thresholds = None
-    self.input_metric_num_channels = None
 
-    # Module specific
+    # Module specific. Keep track of the last classification.
     self._last_classification = {
       "timestamp": int(time.time() * 1000),
-      "channel_0": -1
-      }  # -1 is "do nothing"
+      "channel_0": self.num_input_channels
+    }
 
 
   def configure(self, thresholds):
@@ -90,13 +92,16 @@ class ThresholdClassifier(ClassifierModuleAbstract):
     :type thresholds: dict of floats
     """
 
+    if len(thresholds) != self.num_input_channels:
+      raise ValueError("You must provide a threshold for each channel. The "
+                       "number of thresholds is %s, but the number of "
+                       "channels is: %s" % (len(thresholds),
+                                            self.num_input_channels))
     self.thresholds = thresholds
-
-    # assume num_channels = num_thresholds
-    self.input_metric_num_channels = len(thresholds)
 
 
   def start(self):
+    self._load_classifier()
     self._process(self._classify)
 
 
@@ -135,6 +140,10 @@ class ThresholdClassifier(ClassifierModuleAbstract):
                  % (self.module_id, self.routing_keys))
 
 
+  def _load_classifier(self):
+    pass  # Nothing to load
+
+
   def _classify(self, buffer_in):
     """
     Classification logic.
@@ -169,11 +178,9 @@ class ThresholdClassifier(ClassifierModuleAbstract):
     buffer_out = []
     for input_data in buffer_in:
 
-      input_data = _convert_neurosky(input_data)
-
       activated_thresholds = {}
       active_channel = -1
-      for i in range(self.input_metric_num_channels):
+      for i in range(self.num_input_channels):
         channel_name = "channel_{}".format(i)
         if input_data[channel_name] > self.thresholds[channel_name]:
           activated_thresholds[i] = 1
@@ -190,28 +197,27 @@ class ThresholdClassifier(ClassifierModuleAbstract):
                    % sum_activated_thresholds)
 
       timestamp = input_data["timestamp"]
-      # -1 means "do nothing". Any other index means the chanel with this index 
-      # wins.
       if sum_activated_thresholds == 0:
         # Nothing to 1. So do nothing (i.e. class = neutral)
         # NOTE: by convention neutral is equal to num_channels. So if you 
         # have 2 channels (channel_0 and channel 1) then:
         # - Channel_0 wins => classification = 0 
         # - Channel_1 wins => classification = 1
-        # - No channel win => classification = 2  (= num_channels) 
-        classification = self.input_metric_num_channels  
+        # - Etc ...
+        # - No channel wins => classification = num_channels 
+        classification = self.num_input_channels
       elif sum_activated_thresholds == 1:
-        # Only one channel to 1
+        # Only one channel to 1. So this channel wins.
         classification = active_channel
       else:
         # More than 1 channel to 1. Hard to disambiguate. So remember the last 
-        # class
+        # class.
         classification = self._last_classification["channel_0"]
 
       classification_result = {
         "timestamp": timestamp,
         "channel_0": classification
-        }
+      }
       self._last_classification = classification_result
 
       _LOGGER.info(classification)
@@ -219,13 +225,3 @@ class ThresholdClassifier(ClassifierModuleAbstract):
       buffer_out.append(classification_result)
 
     return buffer_out
-
-
-
-def _convert_neurosky(input_data):
-  """Trick to have neurosky data in the right cloudbrain format"""
-  return {
-    "timestamp": input_data["timestamp"],
-    "channel_0": input_data["meditation"],
-    "channel_1": input_data["attention"]
-    }

@@ -1,10 +1,11 @@
 from brainsquared.modules.classifiers.HTMClassifier import (
   HTMClassifier)
-from brainsquared.modules.runners.conf.htm_conf import (TRAINING_FILE,
-                                                         NUM_RECORDS,
-                                                         NETWORK_CONFIG,
-                                                         NETWORK_PATH,
-                                                         MINVAL, MAXVAL)
+from brainsquared.modules.runners.classifiers.conf.htm_conf import (
+  TRAINING_FILE,
+  NUM_RECORDS,
+  NETWORK_CONFIG,
+  NETWORK_PATH,
+  MINVAL, MAXVAL)
 
 if __name__ == "__main__":
   _USER_ID = "brainsquared"
@@ -30,5 +31,5 @@ if __name__ == "__main__":
                    MAXVAL)
 
   module.connect()
-  module.train(TRAINING_FILE, NUM_RECORDS)
-  module.classify()
+  # module.train(TRAINING_FILE, NUM_RECORDS)
+  module.start()

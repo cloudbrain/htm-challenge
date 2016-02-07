@@ -1,3 +1,4 @@
+sklearn
 tornado
 sockjs
 pika==0.10.0

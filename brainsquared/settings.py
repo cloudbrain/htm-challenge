@@ -149,6 +149,11 @@ DEVICE_METADATA = [
         'metric_description': None
       },
       {
+        'metric_name': 'fft',
+        'num_channels': 8,
+        'metric_description': None
+      },
+      {
         'metric_name': 'signal_strength',
         'num_channels': 1,
         'metric_description': None

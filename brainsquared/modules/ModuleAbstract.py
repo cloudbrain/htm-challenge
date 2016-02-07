@@ -67,12 +67,18 @@ class ModuleAbstract:
     self.rmq_address = rmq_address
     self.rmq_user = rmq_user
     self.rmq_pwd = rmq_pwd
-    self.input_metrics = input_metrics
-    self.output_metrics = output_metrics
 
     self.routing_keys = {}
     self.publishers = {}
     self.subscribers = {}
+
+    # NOTE: Don't use self._input_metrics / self._output_metrics directly.
+    # - They need to be validated with the _validate_metrics implementation of 
+    #   the child class.
+    # - Once they are validated, use the <ModuleType>Abstract class valid 
+    #   metrics  to register subscribers / publishers.
+    self._input_metrics = input_metrics
+    self._output_metrics = output_metrics
 
 
   @abstractmethod
@@ -102,32 +108,32 @@ class ModuleAbstract:
     """
     Initialize routing keys, publisher, and subscriber
     """
-    
+
     self._validate_metrics()
 
-    for input_metric_key, input_metric_name in self.input_metrics.items():
-      self.routing_keys[input_metric_key] = _ROUTING_KEY % (self.user_id,
-                                                            self.device_type,
-                                                            input_metric_name)
-    for output_metric_key, output_metric_name in self.output_metrics.items():
-      self.routing_keys[output_metric_key] = _ROUTING_KEY % (self.user_id,
-                                                             self.device_type,
-                                                             output_metric_name)
+    if self._input_metrics is not None:  # Sources have no input metrics
 
-    for input_metric_key in self.input_metrics.keys():
-      self.publishers[input_metric_key] = PikaPublisher(self.rmq_address,
-                                                        self.rmq_user,
-                                                        self.rmq_pwd)
-      sub = PikaSubscriber(self.rmq_address, self.rmq_user, self.rmq_pwd)
-      sub.connect()
-      sub.register(self.routing_keys[input_metric_key])
-      self.subscribers[input_metric_key] = sub
+      for input_metric_key, input_metric_name in self._input_metrics.items():
+        self.routing_keys[input_metric_key] = _ROUTING_KEY % (
+          self.user_id, self.device_type, input_metric_name)
 
-    for output_metric_key in self.output_metrics.keys():
-      pub = PikaPublisher(self.rmq_address, self.rmq_user, self.rmq_pwd)
-      pub.connect()
-      pub.register(self.routing_keys[output_metric_key])
-      self.publishers[output_metric_key] = pub
+      for input_metric_key in self._input_metrics.keys():
+        sub = PikaSubscriber(self.rmq_address, self.rmq_user, self.rmq_pwd)
+        sub.connect()
+        sub.register(self.routing_keys[input_metric_key])
+        self.subscribers[input_metric_key] = sub
+
+    if self._output_metrics is not None:  # Sinks have no input metrics
+
+      for output_metric_key, output_metric_name in self._output_metrics.items():
+        self.routing_keys[output_metric_key] = _ROUTING_KEY % (
+          self.user_id, self.device_type, output_metric_name)
+
+      for output_metric_key in self._output_metrics.keys():
+        pub = PikaPublisher(self.rmq_address, self.rmq_user, self.rmq_pwd)
+        pub.connect()
+        pub.register(self.routing_keys[output_metric_key])
+        self.publishers[output_metric_key] = pub
 
 
   @abstractmethod
@@ -135,47 +141,3 @@ class ModuleAbstract:
     raise NotImplementedError("You need to implement the logic to start the "
                               "module. Subscribe to input data, process it, "
                               "and publish it back.")
-  
-  # @abstractmethod
-  # def subscribe(self):
-  #   """Subscribe to metric, process data, and publish the result back."""
-  #   raise NotImplementedError("Override this method, and call "
-  #                             "self._subscribe_to_one() and pass it the "
-  #                             "appropriate params to process the data.")
-  # 
-  # 
-  # def _subscribe_to_one(self, subscriber, publisher, routing_key,
-  #                       data_processor):
-  #   """
-  #   Subscribe to one input (1:1 mapping to routing key), process data, 
-  #   and publish it back. 
-  # 
-  #   :param subscriber: subscriber to get input data.
-  #   :type subscriber: SubscriberInterface
-  #   
-  #   :param publisher: publisher to send data back, once it is processed.
-  #   :type publisher: PublisherInterface
-  # 
-  #   :param routing_key: the routing key the publisher will publish to.
-  #   :type routing_key: string
-  #   
-  #   :param data_processor: function to process the data. 
-  #   :type data_processor: Function that takes as input a list of dicts and 
-  #   outputs a list of dicts. Input/output list of dicts must have the following 
-  #   format:  
-  #      {"timestamp": <int>, "channel_0": <float>, ..., "channel_N": <float>}
-  #   """
-  # 
-  # 
-  #   def callback(ch, method, properties, body):
-  #     """Callback function called by the subscriber. Processes the data and 
-  #     publishes it back"""
-  #     buffer_in = json.loads(body)  # input data buffered
-  #     buffer_out = data_processor(buffer_in)  # output data buffered
-  #     publisher.publish(routing_key, buffer_out)
-  #     _LOGGER.debug(ch, method, properties, body)
-  # 
-  # 
-  #   subscriber.subscribe(routing_key, callback)
-  #   _LOGGER.info("[Module %s] Classifier module started.\n Routing keys: %s"
-  #                % (self.module_id, self.routing_keys))

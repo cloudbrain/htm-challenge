@@ -32,7 +32,8 @@
       };
 
       Octopicorn.prototype.start = function (callback) {
-        var stream = this.stream = new RtDataStream('http://localhost:31415/websocket', 'wildcard', 'brainsquared');
+        var stream = this.stream = new RtDataStream
+        ('http://localhost:31415/websocket', 'neurosky', 'brainsquared');
         self = this;
         stream.connect(
           function open(){

@@ -9,7 +9,7 @@ _LOGGER.setLevel(logging.INFO)
 
 
 
-class ClassifierModuleAbstract(ModuleAbstract):
+class SinkModuleAbstract(ModuleAbstract):
   __metaclass__ = ABCMeta
 
 
@@ -24,12 +24,11 @@ class ClassifierModuleAbstract(ModuleAbstract):
                module_id=None):
 
     """
-    Classifier Module Interface.
+    Sink Module Interface.
     
     Metrics conventions:
-    - Data to classify: {"timestamp": <int>, "channel_0": <float>}
-    - Data label: {"timestamp": <int>, "channel_0": <int>}
-    - Classification result: {"timestamp": <int>, "channel_0": <int>}
+    - Input data: {"timestamp": <int>, "channel_0": <float>, ..., 
+      "channel_N": <float>}
     
     
     :param user_id: ID of the user using the device.
@@ -57,44 +56,31 @@ class ClassifierModuleAbstract(ModuleAbstract):
     :type module_id: string
     """
 
-    super(ClassifierModuleAbstract, self).__init__(user_id,
-                                                   device_type,
-                                                   rmq_address,
-                                                   rmq_user,
-                                                   rmq_pwd,
-                                                   input_metrics,
-                                                   output_metrics,
-                                                   module_id)
+    super(SinkModuleAbstract, self).__init__(user_id,
+                                             device_type,
+                                             rmq_address,
+                                             rmq_user,
+                                             rmq_pwd,
+                                             input_metrics,
+                                             output_metrics,
+                                             module_id)
 
     # Keeping track of input/output metrics and their keys
-    self.tag_metric = None
     self.input_metric = None
-    self.output_metric = None
-    
-    self.tag_metric_key = "input_label"
     self.input_metric_key = "input"
-    self.output_metric_key = "classification_result"
-    
+
     self._validate_metrics()
-    
+
 
   def _validate_metrics(self):
     """Validate input and output metrics and initialize them accordingly."""
 
-    if self.tag_metric_key in self._input_metrics:
-      self.tag_metric = self._input_metrics[self.tag_metric_key]
-    else:
-      raise KeyError("The input metric '%s' is not set!" 
-                     % self.tag_metric_key)
-
     if self.input_metric_key in self._input_metrics:
       self.input_metric = self._input_metrics[self.input_metric_key]
     else:
-      raise KeyError("The input metric '%s' is not set!" 
+      raise KeyError("The input metric '%s' is not set!"
                      % self.input_metric_key)
 
-    if self.output_metric_key in self._output_metrics:
-      self.output_metric = self._output_metrics[self.output_metric_key]
-    else:
-      raise KeyError("The output metric '%s' is not set!" 
-                     % self.output_metric_key)
+    if self._output_metrics is not None:
+      raise ValueError("Sink do not accept out put metrics. Value should be "
+                       "None but is %s" % self._output_metrics)

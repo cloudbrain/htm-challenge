@@ -22,7 +22,7 @@ if __name__ == "__main__":
   pwd = "guest"
 
   user = "brainsquared"
-  device = "wildcard"
+  device = "neurosky"
   metric = "classification"
   routing_key = "%s:%s:%s" % (user, device, metric)
 
