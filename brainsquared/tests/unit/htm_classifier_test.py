@@ -5,7 +5,7 @@ import unittest
 from htmresearch.frameworks.classification.utils.network_config import \
   generateNetworkPartitions
 
-from brainsquared.analytics.htm_classifier import HTMClassifier
+from brainsquared.modules.htm_classifier import HTMClassifier
 
 _TRAIN_SET_SIZE = 2000
 _NTWK_CONFIG = "config/network_config.json"
@@ -19,7 +19,7 @@ class HTMClassifierTest(unittest.TestCase):
       self.network_config = simplejson.load(jsonFile)
     self.classifier = HTMClassifier(self.network_config, _TRAINING_DATA, 
                                     _CATEGORIES)
-    self.classifier.initialize()
+    self.classifier.connect()
 
   def testTrainingAccuracy(self):
     partitions = generateNetworkPartitions(self.network_config, _TRAIN_SET_SIZE)

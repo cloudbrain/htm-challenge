@@ -23,7 +23,7 @@ class PikaPublisher(PublisherInterface):
     credentials = pika.PlainCredentials(self.user, self.password)
 
     self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-      host=self.host, credentials=credentials))
+        host=self.host, credentials=credentials))
 
 
   def disconnect(self):
@@ -45,28 +45,6 @@ class PikaPublisher(PublisherInterface):
                                              routing_key=routing_key,
                                              body=json.dumps(data),
                                              properties=pika.BasicProperties(
-                                               delivery_mode=2,
-                                               # makes the message persistent
+                                                 delivery_mode=2,
+                                                 # makes the message persistent
                                              ))
-
-
-if __name__ == "__main__":
-  
-  host = "rabbitmq.cloudbrain.rocks"
-  username = "cloudbrain"
-  pwd = "cloudbrain"
-  
-  user = "test"
-  device = "openbci"
-  metric = "mu"
-  routing_key = "%s:%s:%s" % (user, device, metric)
-  
-  pub = PikaPublisher(host, username, pwd)
-  pub.connect()
-  pub.register(routing_key)
-  
-  while 1:
-    try:
-      pub.publish(routing_key, {"timestamp": 0, "value": 0})
-    except KeyboardInterrupt:
-      pub.disconnect()
