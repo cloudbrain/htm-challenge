@@ -62,3 +62,6 @@ target/
 
 # Frontend
 brainsquared/frontend/node_modules/
+brainsquared/module_runners/models/svm-attention.pkl_01.npy
+brainsquared/module_runners/models/svm-attention.pkl_02.npy
+brainsquared/module_runners/models/svm-attention.pkl_03.npy
