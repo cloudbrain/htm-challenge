@@ -178,7 +178,7 @@ class SKLearnClassifier(ClassifierModuleAbstract):
       timestamp = input_data["timestamp"]
       to_classify = [input_data["channel_%s" % i] for i in
                      range(self.num_input_channels)]
-      classification = self.classifier.predict(to_classify)[0]
+      classification = int(self.classifier.predict(to_classify)[0])
       classification_result = {
         "timestamp": timestamp,
         "channel_0": classification
