@@ -7,62 +7,27 @@ Ported from Puzzlebox Synapse
 ThinkGear code imported from Puzzlebox.Synapse.ThinkGear.Server
 http://puzzlebox.io
 
-This code is released under the GNU Pulic License (GPL) version 3
-For more information please refer to http://www.gnu.org/copyleft/gpl.html
+This code is released under the GNU Lesser Public License (LGPL) version 3
+For more information please refer to http://www.gnu.org/copyleft/lgpl.html
 
 Author: Steve Castellotti <sc@puzzlebox.io>
 """
 
 __changelog__ = """
-Last Update: 2016.02.02
+Last Update: 2016.02.12
 """
 
 import sys, signal
-from brainsquared.publishers.PikaPublisher import PikaPublisher
 import threading
+from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.modules.sources import NeuroskyConnector
 from brainsquared.modules.sources import NeuroskyPublisher
 
 DEBUG = 1
 
 
-#try:
-	#import Puzzlebox.Synapse.Configuration as configuration
-#except:
-
-	#class Configuration():
-		
-		#def __init__(self):
-		
-			## Ported from Puzzlebox.Synapse.Configuration
-			
-			#self.DEBUG = 1
-			
-			#self.ENABLE_QT = False
-			#self.ENABLE_PYSIDE = False
-			
-			##self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS = 'COM2'
-			##self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX = '/dev/rfcomm0'
-
-			##if (sys.platform == 'win32'):
-				##self.THINKGEAR_DEVICE_SERIAL_PORT = self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS
-			##else:
-				##self.THINKGEAR_DEVICE_SERIAL_PORT = self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX
-
-			##self.THINKGEAR_EEG_POWER_BAND_ORDER = ['delta', \
-														##'theta', \
-														##'lowAlpha', \
-														##'highAlpha', \
-														##'lowBeta', \
-														##'highBeta', \
-														##'lowGamma', \
-														##'highGamma']
-			
-	#configuration = Configuration()
-
-
 THINKGEAR_DEVICE_SERIAL_PORT = '/dev/tty.MindWaveMobile-DevA'
-THINKGEAR_ENABLE_SIMULATE_HEADSET_DATA = False
+
 
 RABBITMQ_HOST = 'localhost'
 RABBITMQ_USERNAME = 'guest'
@@ -72,51 +37,9 @@ PUBLISHER_DEVICE = 'neurosky'
 PUBLISHER_METRIC = 'mindwave'
 
 
-
-#def displayCSVHeader():
-  #print "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (
-    #'timestamp',
-    #'eeg',
-    #'poorSignalLevel',
-    #'attention',
-    #'meditation',
-    #'delta',
-    #'theta',
-    #'lowAlpha',
-    #'highAlpha',
-    #'lowBeta',
-    #'highBeta',
-    #'lowGamma',
-    #'highGamma',
-    #'label',
-  #)
-
-
-
-#def displayCSV(packet):
-  #print "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (
-    #packet['timestamp'],
-    #packet['eeg'],
-    #packet['poorSignalLevel'],
-    #packet['attention'],
-    #packet['meditation'],
-    #packet['delta'],
-    #packet['theta'],
-    #packet['lowAlpha'],
-    #packet['highAlpha'],
-    #packet['lowBeta'],
-    #packet['highBeta'],
-    #packet['lowGamma'],
-    #packet['highGamma'],
-    #packet['label'],
-  #)
-
-
-
 class NeuroskySource(threading.Thread):
 	def __init__(self, log,
 					device_address=THINKGEAR_DEVICE_SERIAL_PORT,
-					emulate_headset_data=THINKGEAR_ENABLE_SIMULATE_HEADSET_DATA,
 					rabbitmq_host=RABBITMQ_HOST,
 					rabbitmq_username=RABBITMQ_USERNAME,
 					rabbitmq_password=RABBITMQ_PASSWORD,
@@ -136,7 +59,6 @@ class NeuroskySource(threading.Thread):
 		self.parent = parent
 
 		self.device_address = device_address
-		self.emulate_headset_data = emulate_headset_data
 
 
 		self.cloudbrain_publisher = \
@@ -154,55 +76,9 @@ class NeuroskySource(threading.Thread):
 		
 		self.cloudbrain_publisher.start()
 
-
-    #self.attention_threshold = 70
-
-    #self.data = {
-      #'poorSignalLevel': 200, 'attention': 0, 'meditation': 0, 'delta': 0,
-      #'theta': 0, 'lowAlpha': 0, 'highAlpha': 0, 'lowBeta': 0, 'highBeta': 0,
-      #'lowGamma': 0, 'highGamma': 0, 'label': 0
-    #}
-
-    #self.host = server_host
-    #self.username = server_username
-    #self.pwd = server_password
-
-    #self.user = publisher_user
-    #self.device = publisher_device
-    #self.metric = publisher_metric
-
-    ## Send data efficiently in one packet
-    #self.buffer_size = 10
-    #self.data_buffer = []
-    #self.routing_key = "%s:%s:%s" % (self.user, self.device, self.metric)
-    #self.pub = PikaPublisher(self.host, self.username, self.pwd)
-    #self.pub.connect()
-    #self.pub.register(self.routing_key)
-
-    ## Also send each metric individually in cloudbrain format
-    #self.metrics = ['timestamp', 'eeg', 'poorSignalLevel', 'attention',
-                    #'meditation', 'delta', 'theta', 'lowAlpha', 'highAlpha',
-                    #'lowBeta', 'highBeta', 'lowGamma', 'highGamma']
-    #self.publishers = {}
-    #self.routing_keys = {}
-    #for metric in self.metrics:
-      #self.routing_keys[metric] = "%s:neurosky:%s" % (self.user, metric)
-      #self.publishers[metric] = PikaPublisher(self.host,
-                                              #self.username,
-                                              #self.pwd)
-
-      #self.publishers[metric].connect()
-      #self.publishers[metric].register(self.routing_keys[metric])
-
-    ## Send FFT
-    #self.fft_routing_key = "%s:%s:%s" % (self.user, self.device, "fft")
-    #self.fft_pub = PikaPublisher(self.host, self.username, self.pwd)
-    #self.fft_pub.connect()
-    #self.fft_pub.register(self.fft_routing_key)
-
 		# Final setup
 		self.configureEEG()
-		#displayCSVHeader()
+
 
 
 	def setPacketCount(self, value):
@@ -236,21 +112,16 @@ class NeuroskySource(threading.Thread):
 
 
 	def configureEEG(self):
-
-		if not self.emulate_headset_data:
-			
-			self.serial_device = \
-				NeuroskyConnector.SerialDevice(
-					self.log, \
-					device_address=self.device_address, \
-					#DEBUG=self.DEBUG, \
-					DEBUG=0, \
-					parent=self)
-			
-			self.serial_device.start()
 		
-		else:
-			self.serial_device = None
+		self.serial_device = \
+			NeuroskyConnector.SerialDevice(
+				self.log, \
+				device_address=self.device_address, \
+				#DEBUG=self.DEBUG, \
+				DEBUG=0, \
+				parent=self)
+		
+		self.serial_device.start()
 		
 		
 		self.protocol = \
@@ -260,8 +131,6 @@ class NeuroskySource(threading.Thread):
 				#device_model=self.device_model, \
 				DEBUG=self.DEBUG, \
 				parent=self)
-		
-		#self.plugin_session = self.parent.plugin_session # for Jigsaw compatability
 		
 		self.protocol.start()
 
@@ -274,98 +143,6 @@ class NeuroskySource(threading.Thread):
 		if (packet != {}):
 			self.cloudbrain_publisher.appendPacket(packet)
 
-		#if 'rawEeg' in packet.keys():
-
-		## packet['channel_0'] = packet.pop('rawEeg')
-		#packet['eeg'] = packet.pop('rawEeg')
-
-		#packet['poorSignalLevel'] = self.data['poorSignalLevel']
-		#packet['attention'] = self.data['attention']
-		#packet['meditation'] = self.data['meditation']
-		#packet['delta'] = self.data['delta']
-		#packet['theta'] = self.data['theta']
-		#packet['lowAlpha'] = self.data['lowAlpha']
-		#packet['highAlpha'] = self.data['highAlpha']
-		#packet['lowBeta'] = self.data['lowBeta']
-		#packet['highBeta'] = self.data['highBeta']
-		#packet['lowGamma'] = self.data['lowGamma']
-		#packet['highGamma'] = self.data['highGamma']
-		#packet['label'] = self.data['label']
-
-		#if self.DEBUG > 1:
-			#print packet
-		#else:
-			#displayCSV(packet)
-
-		#if len(self.data_buffer) > self.buffer_size:
-			## Publish efficiently in one packet
-			##self.pub.publish(self.routing_key, self.data_buffer)
-
-			## Also send each metric individually in cloudbrain format
-			#for metric in self.metrics:
-				#buffer_out = []
-				#for packet in self.data_buffer:
-				#metric_data = {
-					#"timestamp": packet["timestamp"],
-					#"channel_0": packet[metric]
-				#}
-				#buffer_out.append(metric_data)
-				#self.publishers[metric].publish(self.routing_keys[metric],
-														#buffer_out)
-
-			## Also send fft
-			#buffer_out = []
-			#for packet in self.data_buffer:
-				#metric_data = {
-				#"timestamp": packet["timestamp"],
-				#"channel_0": packet['lowAlpha'],
-				#"channel_1": packet['highAlpha'],
-				#"channel_2": packet['lowBeta'],
-				#"channel_3": packet['highBeta'],
-				#"channel_4": packet['lowGamma'],
-				#"channel_5": packet['highGamma'],
-				#"channel_6": packet['delta'],
-				#"channel_7": self.data['theta'],
-				#}
-				#buffer_out.append(metric_data)
-			#self.fft_pub.publish(self.fft_routing_key, buffer_out)
-
-			#if self.DEBUG > 1:
-				#print self.data_buffer
-			#self.data_buffer = []
-			#if self.DEBUG > 1:
-				#print "Publishing:",
-				#print self.routing_key
-		#else:
-			#self.data_buffer.append(packet)
-
-		#else:
-
-		#if 'poorSignalLevel' in packet.keys():
-			#self.data['poorSignalLevel'] = packet['poorSignalLevel']
-
-		#if 'eegPower' in packet.keys():
-			#self.data['delta'] = packet['eegPower']['delta']
-			#self.data['theta'] = packet['eegPower']['theta']
-			#self.data['lowAlpha'] = packet['eegPower']['lowAlpha']
-			#self.data['highAlpha'] = packet['eegPower']['highAlpha']
-			#self.data['lowBeta'] = packet['eegPower']['lowBeta']
-			#self.data['highBeta'] = packet['eegPower']['highBeta']
-			#self.data['lowGamma'] = packet['eegPower']['lowGamma']
-			#self.data['highGamma'] = packet['eegPower']['highGamma']
-
-		#if 'eSense' in packet.keys():
-			#if 'attention' in packet['eSense'].keys():
-				#self.data['attention'] = packet['eSense']['attention']
-
-				#if self.data['attention'] >= self.attention_threshold:
-				#self.data['label'] = 1
-				#else:
-				#self.data['label'] = 0
-
-			#if 'meditation' in packet['eSense'].keys():
-				#self.data['meditation'] = packet['eSense']['meditation']
-
 
 	def resetDevice(self):
 
@@ -374,6 +151,9 @@ class NeuroskySource(threading.Thread):
 
 		if self.protocol is not None:
 			self.protocol.exitThread()
+
+		if self.cloudbrain_publisher != None:
+			self.cloudbrain_publisher.exitThread()
 
 		self.configureEEG()
 
@@ -393,14 +173,10 @@ class NeuroskySource(threading.Thread):
 			self.cloudbrain_publisher.exitThread()
 
 		if callThreadQuit:
-			#if configuration.ENABLE_QT:
-				#Thread.quit(self)
-			#else:
 			self.join()
 
 		if self.parent is None:
 			sys.exit()
-
 
 
 if __name__ == "__main__":
@@ -444,7 +220,6 @@ if __name__ == "__main__":
 	publisher = NeuroskySource(
 		log,
 		device_address=device_address,
-		emulate_headset_data=THINKGEAR_ENABLE_SIMULATE_HEADSET_DATA,
 		rabbitmq_host=rabbitmq_host,
 		rabbitmq_username=rabbitmq_username,
 		rabbitmq_password=rabbitmq_password,
