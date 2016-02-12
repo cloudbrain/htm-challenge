@@ -4,8 +4,7 @@
 Copyright Puzzlebox Productions, LLC (2010-2016)
 
 Ported from Puzzlebox Synapse
-ThinkGear code imported from Puzzlebox.Synapse.ThinkGear.Server
-http://puzzlebox.io
+https://github.com/PuzzleboxIO/synapse-python
 
 This code is released under the GNU Lesser Public License (LGPL) version 3
 For more information please refer to http://www.gnu.org/copyleft/lgpl.html
@@ -194,24 +193,18 @@ if __name__ == "__main__":
 	publisher_metric = PUBLISHER_METRIC
 
 	for each in sys.argv:
-		if each.startswith("--interface="):
-			server_interface = each[len("--interface="):]
-		if each.startswith("--port="):
-			server_port = each[len("--port="):]
-		if each.startswith("--device="):
-			device_address = each[len("--device="):]
 		if each.startswith("--debug="):
 			DEBUG = int(each[len("--debug="):])
-		if each.startswith("--id="):
-			device_id = int(each[len("--id="):])
-		if each.startswith("--server_host="):
-			server_host = each[len("--server_host="):]
-		if each.startswith("--server_username="):
-			server_username = each[len("--server_username="):]
-		if each.startswith("--server_password="):
-			server_password = each[len("--server_password="):]
-		if each.startswith("--publisher_user="):
-			publisher_user = each[len("--publisher_user="):]
+		if each.startswith("--device="):
+			device_address = each[len("--device="):]
+		if each.startswith("--rabbitmq_host="):
+			rabbitmq_host = each[len("--rabbitmq_host="):]
+		if each.startswith("--rabbitmq_username="):
+			rabbitmq_username = each[len("--rabbitmq_username="):]
+		if each.startswith("--rabbitmq_password="):
+			rabbitmq_password = each[len("--rabbitmq_password="):]
+		if each.startswith("--publisher_username="):
+			publisher_username = each[len("--publisher_username="):]
 		if each.startswith("--publisher_device="):
 			publisher_device = each[len("--publisher_device="):]
 		if each.startswith("--publisher_metric="):
