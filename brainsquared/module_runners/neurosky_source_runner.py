@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright Puzzlebox Productions, LLC (2010-2016)
+Copyright Puzzlebox Productions, LLC (2016)
 
 Ported from Puzzlebox Synapse
 https://github.com/PuzzleboxIO/synapse-python
@@ -16,17 +16,23 @@ __changelog__ = """
 Last Update: 2016.02.12
 """
 
+#####################################################################
+# Imports
+#####################################################################
+
 import sys, signal
 import threading
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 from brainsquared.modules.sources import NeuroskyConnector
 from brainsquared.modules.sources import NeuroskyPublisher
 
+#####################################################################
+# Globals
+#####################################################################
+
 DEBUG = 1
 
-
 THINKGEAR_DEVICE_SERIAL_PORT = '/dev/tty.MindWaveMobile-DevA'
-
 
 RABBITMQ_HOST = 'localhost'
 RABBITMQ_USERNAME = 'guest'
@@ -35,6 +41,9 @@ PUBLISHER_USERNAME = 'brainsquared'
 PUBLISHER_DEVICE = 'neurosky'
 PUBLISHER_METRIC = 'mindwave'
 
+#####################################################################
+# Classes
+#####################################################################
 
 class NeuroskySource(threading.Thread):
 	def __init__(self, log,
