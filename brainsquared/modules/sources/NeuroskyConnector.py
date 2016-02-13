@@ -2,13 +2,13 @@
 
 # Copyright Puzzlebox Productions, LLC (2010-2016)
 #
-# This code is released under the GNU Affero Pulic License (AGPL) version 3
-# For more information please refer to https://www.gnu.org/licenses/agpl.html
+# This code is released under the GNU Lesser Public License (LGPL) version 3
+# For more information please refer to https://www.gnu.org/licenses/lgpl.html
 #
 # Author: Steve Castellotti <sc@puzzlebox.io>
 
 __changelog__ = """
-Last Update: 2016.02.10
+Last Update: 2016.02.13
 """
 
 __todo__ = """
@@ -83,7 +83,10 @@ Linux Bluetooth serial protocol profile example:
     rfcomm connect rfcomm0 00:13:EF:00:1B:FE 3
 """
 
-### IMPORTS ###
+#####################################################################
+# Imports
+#####################################################################
+
 import sys, time
 import signal
 import serial
@@ -101,8 +104,6 @@ except:
 	class Configuration():
 		
 		def __init__(self):
-		
-			# Ported from Puzzlebox.Synapse.Configuration
 			
 			self.DEBUG = 1
 			
@@ -134,14 +135,11 @@ if configuration.ENABLE_QT:
 		try:
 			import PySide
 			from PySide import QtCore
-			#import QtCore.QThread as Thread
 			Thread = PySide.QtCore.QThread
 		except Exception, e:
 			print "ERROR: Exception importing PySide:",
 			print e
 			configuration.ENABLE_PYSIDE = False
-			#print "INFO: [Synapse:ThinkGear:Protocol] Using PyQt4 module"
-			#from PyQt4 import QtCore
 		else:
 			print "INFO: [Synapse:ThinkGear:Protocol] Using PySide module"
 	
@@ -152,23 +150,11 @@ if configuration.ENABLE_QT:
 			from PyQt4 import QtCore
 		except:
 			configuration.ENABLE_QT = False
-			#import threading
-			#Thread = threading.Thread
 
 #else:
 if not configuration.ENABLE_QT:
-	#import threading
-	#import threading.Thread as Thread
 	import threading
 	Thread = threading.Thread
-
-#if not configuration.ENABLE_PYSIDE:
-	#try:
-		#print "INFO: [Synapse:ThinkGear:Protocol] Using PyQt4 module"
-		#from PyQt4 import QtCore
-	#except:
-		#import threading
-		#Thread = threading.Thread
 
 
 #####################################################################
@@ -219,8 +205,6 @@ DEBUG_PACKET_COUNT = 1024
 # Classes
 #####################################################################
 
-#class puzzlebox_synapse_protocol_thinkgear(QtCore.QThread):
-#class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 class puzzlebox_synapse_protocol_thinkgear(Thread):
 	
 	def __init__(self, log, \
@@ -229,12 +213,6 @@ class puzzlebox_synapse_protocol_thinkgear(Thread):
 			       DEBUG=DEBUG, \
 			       parent=None):
 		
-		##QtCore.QThread.__init__(self,parent)
-		##threading.Thread.__init__ (self)
-		#if configuration.ENABLE_PYSIDE:
-			#Thread.__init__ (self, parent)
-		#else:
-			#Thread.__init__ (self)
 		try:
 			QtCore.QThread.__init__(self, parent)
 		except:
@@ -1222,7 +1200,7 @@ class SerialDevice(Thread):
 					self.join()
 			except Exception, e:
 				if self.DEBUG:
-					print "ERROR: Protocol failed to call QtCore.QThread.quit(self) in exitThread():",
+					print "ERROR: Protocol failed to exitThread():",
 					print e
 	
 	
