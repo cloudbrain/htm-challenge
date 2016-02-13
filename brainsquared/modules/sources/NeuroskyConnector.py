@@ -2,24 +2,19 @@
 
 # Copyright Puzzlebox Productions, LLC (2010-2016)
 #
-# Ported from Puzzlebox Synapse
-# ThinkGear code imported from Puzzlebox.Synapse.ThinkGear.Protocol
-# http://puzzlebox.io
-#
-# This code is released under the GNU Pulic License (GPL) version 3
-# For more information please refer to http://www.gnu.org/copyleft/gpl.html
+# This code is released under the GNU Lesser Public License (LGPL) version 3
+# For more information please refer to https://www.gnu.org/licenses/lgpl.html
 #
 # Author: Steve Castellotti <sc@puzzlebox.io>
 
-
 __changelog__ = """
-Last Update: 2016.02.02
+Last Update: 2016.02.13
 """
 
 __todo__ = """
 
  - When a "MindSet" is configured as "MindWave" hardware:
-   File "~/development/jigsaw/trunk/Puzzlebox/Synapse/Protocol.py", line 868, in run
+   File "jigsaw-python/Puzzlebox/Synapse/Protocol.py", line 868, in run
    self.device.device.write('\xc1')
 
  - needs to handle:
@@ -88,63 +83,78 @@ Linux Bluetooth serial protocol profile example:
     rfcomm connect rfcomm0 00:13:EF:00:1B:FE 3
 """
 
-### IMPORTS ###
+#####################################################################
+# Imports
+#####################################################################
+
 import sys, time
 import signal
 import serial
 import copy
-import threading
 
 if ((sys.platform != 'win32') and \
     (sys.platform != 'darwin')):
 	import bluetooth
 
 
-class Configuration():
-	
-	def __init__(self):
-	
-		# Ported from Puzzlebox.Synapse.Configuration
-		
-		self.DEBUG = 1
-		
-		self.ENABLE_PYSIDE = True
-		
-		self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS = 'COM2'
-		self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX = '/dev/rfcomm0'
+try:
+	import Puzzlebox.Synapse.Configuration as configuration
+except:
 
-		if (sys.platform == 'win32'):
-			self.THINKGEAR_DEVICE_SERIAL_PORT = self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS
+	class Configuration():
+		
+		def __init__(self):
+			
+			self.DEBUG = 1
+			
+			self.ENABLE_QT = False
+			self.ENABLE_PYSIDE = False
+			
+			self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS = 'COM2'
+			self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX = '/dev/rfcomm0'
+
+			if (sys.platform == 'win32'):
+				self.THINKGEAR_DEVICE_SERIAL_PORT = self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS
+			else:
+				self.THINKGEAR_DEVICE_SERIAL_PORT = self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX
+
+			self.THINKGEAR_EEG_POWER_BAND_ORDER = ['delta', \
+														'theta', \
+														'lowAlpha', \
+														'highAlpha', \
+														'lowBeta', \
+														'highBeta', \
+														'lowGamma', \
+														'highGamma']
+			
+	configuration = Configuration()
+
+
+if configuration.ENABLE_QT:
+	if configuration.ENABLE_PYSIDE:
+		try:
+			import PySide
+			from PySide import QtCore
+			Thread = PySide.QtCore.QThread
+		except Exception, e:
+			print "ERROR: Exception importing PySide:",
+			print e
+			configuration.ENABLE_PYSIDE = False
 		else:
-			self.THINKGEAR_DEVICE_SERIAL_PORT = self.DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX
-
-		self.THINKGEAR_EEG_POWER_BAND_ORDER = ['delta', \
-													'theta', \
-													'lowAlpha', \
-													'highAlpha', \
-													'lowBeta', \
-													'highBeta', \
-													'lowGamma', \
-													'highGamma']
+			print "INFO: [Synapse:ThinkGear:Protocol] Using PySide module"
 	
+	
+	if not configuration.ENABLE_PYSIDE:
+		try:
+			print "INFO: [Synapse:ThinkGear:Protocol] Using PyQt4 module"
+			from PyQt4 import QtCore
+		except:
+			configuration.ENABLE_QT = False
 
-#import Puzzlebox.Synapse.Configuration as configuration
-configuration = Configuration()
-
-#if configuration.ENABLE_PYSIDE:
-	#try:
-		#import PySide as PyQt4
-		#from PySide import QtCore
-	#except Exception, e:
-		#print "ERROR: Exception importing PySide:",
-		#print e
-		##configuration.ENABLE_PYSIDE = False
-	##else:
-		##print "INFO: [Synapse:ThinkGear:Protocol] Using PySide module"
-
-##if not configuration.ENABLE_PYSIDE:
-	##print "INFO: [Synapse:ThinkGear:Protocol] Using PyQt4 module"
-	##from PyQt4 import QtCore
+#else:
+if not configuration.ENABLE_QT:
+	import threading
+	Thread = threading.Thread
 
 
 #####################################################################
@@ -191,27 +201,22 @@ DEVICE_BUFFER_MAX_SIZE = 180 # Reset buffer if it grow this large
 DEBUG_BYTE_COUNT = 819200
 DEBUG_PACKET_COUNT = 1024
 
-
-#CURRENT_SIGNAL = 0
-#CURRENT_ATTENTION = 0
-#CURRENT_MEDITATION = 0
-
 #####################################################################
 # Classes
 #####################################################################
 
-#class puzzlebox_synapse_protocol_thinkgear(QtCore.QThread):
-class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
+class puzzlebox_synapse_protocol_thinkgear(Thread):
 	
 	def __init__(self, log, \
 			       serial_device, \
-			       device_model='NeuroSky MindWave', \
+			       device_model=None, \
 			       DEBUG=DEBUG, \
 			       parent=None):
 		
-		#QtCore.QThread.__init__(self,parent)
-		#threading.Thread.__init__ (self,parent)
-		threading.Thread.__init__ (self)
+		try:
+			QtCore.QThread.__init__(self, parent)
+		except:
+			Thread.__init__ (self)
 		
 		self.log = log
 		self.DEBUG = DEBUG
@@ -225,7 +230,6 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 		#self.payload_timestamp = time.time()
 		self.payload_timestamp = int(time.time() * 1000000)
 		
-		
 		self.device = serial_device
 		#self.auto_connect_timestamp = time.time()
 		self.auto_connect_timestamp = int(time.time() * 1000000)
@@ -237,8 +241,8 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 		self.current_signal = 200
 		self.current_attention = 0
 		self.current_meditaiton = 0
-		self.detection_threshold = 70
-		self.current_detection = 0
+		#self.detection_threshold = 70
+		#self.current_detection = 0
 		
 		#self.packet_count = 0
 		#self.bad_packets = 0
@@ -318,14 +322,6 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 		if (raw >= 32768):
 			raw = raw - 65536
 		
-
-		#if (self.current_signal == 0):
-			#print "%s,%i,%i,%i,%s,%i" % (int(time.time() * 1000000),
-						#self.current_signal,
-						#self.current_attention,
-						#self.current_meditaiton,
-						#raw,
-						#self.current_detection)
 		
 		return (raw)
 	
@@ -438,8 +434,6 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 				self.current_signal = copy.copy(poor_signal_quality)
 				
 				packet_update['poorSignalLevel'] = poor_signal_quality
-				
-				self.current_signal = poor_signal_quality
 			
 			
 			elif code == '04':
@@ -450,10 +444,10 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 				
 				self.current_attention = copy.copy(attention)
 				
-				if (attention > self.detection_threshold):
-					self.current_detection = 1
-				else:
-					self.current_detection = 0
+				#if (attention > self.detection_threshold):
+					#self.current_detection = 1
+				#else:
+					#self.current_detection = 0
 				
 				packet_update['eSense'] = {}
 				packet_update['eSense']['attention'] = attention
@@ -464,8 +458,6 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 				if self.DEBUG > 1:
 					print "meditation:",
 					print meditation
-				
-				self.current_meditaiton = copy.copy(meditation)
 				
 				packet_update['eSense'] = {}
 				packet_update['eSense']['meditation'] = meditation
@@ -492,12 +484,6 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 					print raw_eeg_value
 				
 				packet_update['rawEeg'] = raw_eeg_value
-				
-				#print "%s,%i,%i,%i,%s" % (time.time(),
-										#self.current_signal,
-										#self.current_attention,
-										#self.current_meditaiton,
-										#raw_eeg_value)
 			
 			
 			elif code == '83':
@@ -699,7 +685,6 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 			# Synchronize on [SYNC] bytes
 			# Read from stream until two consecutive [SYNC] bytes are found
 			byte = self.device.read()
-			
 			if (byte != PROTOCOL_SYNC):
 				continue
 			
@@ -875,12 +860,7 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 	
 	def run(self):
 		
-		try:
-			self.resetSession()
-		except Exception, e:
-			if self.DEBUG:
-				print "ERROR: self.resetSession():",
-				print e
+		self.resetSession()
 		
 		if self.device != None and self.device.device != None:
 			if self.device_model == 'NeuroSky MindWave':
@@ -910,27 +890,36 @@ class puzzlebox_synapse_protocol_thinkgear(threading.Thread):
 		
 		
 		if callThreadQuit:
-			#QtCore.QThread.quit(self)
-			if self.DEBUG:
-				print "self.join()"
-			self.join()
-			
+			#if configuration.ENABLE_PYSIDE:
+			if configuration.ENABLE_QT:
+				#QtCore.QThread.quit(self)
+				Thread.quit(self)
+			else:
+				self.join()
 
 
 #####################################################################
 #####################################################################
 
 #class SerialDevice(QtCore.QThread):
-class SerialDevice(threading.Thread):
+#class SerialDevice(threading.Thread):
+class SerialDevice(Thread):
 	
 	def __init__(self, log, \
 			       device_address=THINKGEAR_DEVICE_SERIAL_PORT, \
 			       DEBUG=DEBUG, \
 			       parent=None):
 		
-		#QtCore.QThread.__init__(self, parent)
-		#threading.Thread.__init__ (self,parent)
-		threading.Thread.__init__ (self)
+		##QtCore.QThread.__init__(self, parent)
+		##threading.Thread.__init__ (self)
+		#if configuration.ENABLE_PYSIDE:
+			#QtCore.QThread.__init__(self, parent)
+		#else:
+			#Thread.__init__ (self)
+		try:
+			QtCore.QThread.__init__(self, parent)
+		except:
+			Thread.__init__ (self)
 		
 		self.log = log
 		self.DEBUG = DEBUG
@@ -943,27 +932,36 @@ class SerialDevice(threading.Thread):
 		if (self.device_address.count(':') == 5):
 			# Device address is a Bluetooth MAC address
 			if self.DEBUG:
-				print "INFO: Initializing Bluetooth Device",
+				print "Initializing Bluetooth Device",
 				print self.device_address
 			self.device = self.initializeBluetoothDevice()
 		else:
 			# Device address is a serial port address
 			if self.DEBUG:
-				print "INFO: Initializing Serial Device",
+				print "Initializing Serial Device",
 				print self.device_address
 			self.device = self.initializeSerialDevice()
 		
-		#self.buffer_check_timer = QtCore.QTimer()
-		#QtCore.QObject.connect(self.buffer_check_timer, \
-		                       #QtCore.SIGNAL("timeout()"), \
-		                       #self.checkBuffer)
-		#self.buffer_check_timer.start(DEVICE_BUFFER_CHECK_TIMER)
+		#if configuration.ENABLE_PYSIDE:
+		if configuration.ENABLE_QT:
+			try:
+				self.buffer_check_timer = QtCore.QTimer()
+				QtCore.QObject.connect(self.buffer_check_timer, \
+											QtCore.SIGNAL("timeout()"), \
+											self.checkBuffer)
+				self.buffer_check_timer.start(DEVICE_BUFFER_CHECK_TIMER)
+				
+				self.read_buffer_check_timer = QtCore.QTimer()
+				QtCore.QObject.connect(self.read_buffer_check_timer, \
+											QtCore.SIGNAL("timeout()"), \
+											self.checkReadBuffer)
+			except Exception, e:
+				if self.DEBUG > 1:
+					print "ERROR: Failed to interface with QtCore.QTimer():",
+					print e
+		else:
+			pass
 		
-		#self.read_buffer_check_timer = QtCore.QTimer()
-		#QtCore.QObject.connect(self.read_buffer_check_timer, \
-		                       #QtCore.SIGNAL("timeout()"), \
-		                       #self.checkReadBuffer)
-##		self.read_buffer_check_timer.start(DEVICE_READ_BUFFER_CHECK_TIMER)
 		
 		self.keep_running = True
 	
@@ -1070,7 +1068,8 @@ class SerialDevice(threading.Thread):
 			
 			device.flushInput()
 			#device.flushOutput()
-		
+			
+			
 		except Exception, e:
 			if self.DEBUG:
 				print "ERROR:",
@@ -1143,14 +1142,18 @@ class SerialDevice(threading.Thread):
 		# (1/512) * 1000 = 1.9531250
 		while len(self.buffer) < length:
 			try:
-				#QtCore.QThread.msleep(2)
-				time.sleep(0.002)
+				#if configuration.ENABLE_PYSIDE:
+				if configuration.ENABLE_QT:
+					#QtCore.QThread.msleep(2)
+					Thread.msleep(2)
+				else:
+					time.sleep(0.002)
 			except Exception, e:
 				#if self.DEBUG:
 					#print "ERROR: Protocol failed to call QtCore.QThread.msleep(2) in read():",
 					#print e
 				pass
-			
+		
 		bytes = self.buffer[:length]
 		
 		self.buffer = self.buffer[length:]
@@ -1189,14 +1192,15 @@ class SerialDevice(threading.Thread):
 		
 		if callThreadQuit:
 			try:
-				if self.DEBUG:
-					print "self.join()"
-				#QtCore.QThread.quit(self)
-				self.join()
+				#if configuration.ENABLE_PYSIDE:
+				if configuration.ENABLE_QT:
+					#QtCore.QThread.quit(self)
+					Thread.quit(self)
+				else:
+					self.join()
 			except Exception, e:
 				if self.DEBUG:
-					#print "ERROR: Protocol failed to call QtCore.QThread.quit(self) in exitThread():",
-					print "ERROR: Protocol failed to call self.join() in exitThread():",
+					print "ERROR: Protocol failed to exitThread():",
 					print e
 	
 	
@@ -1237,10 +1241,9 @@ class SerialDevice(threading.Thread):
 						
 					self.buffer += byte
 			
-			except Exception, e:
+			except:
 				if self.DEBUG:
-					print "ERROR: failed to read from serial device:",
-					print e
+					print "ERROR: failed to read from serial device"
 				break
 		
 		
@@ -1258,34 +1261,3 @@ class serialWrapper(serial.Serial):
 		
 		return(self.read(size))
 
-
-#####################################################################
-#####################################################################
-
-#class Configuration():
-	
-	#def __init__(self):
-	
-		## Ported from Puzzlebox.Synapse.Configuration
-		
-		#DEBUG = 1
-		
-		#ENABLE_PYSIDE = True
-		
-		#DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS = 'COM2'
-		#DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX = '/dev/rfcomm0'
-
-		#if (sys.platform == 'win32'):
-			#THINKGEAR_DEVICE_SERIAL_PORT = DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_WINDOWS
-		#else:
-			#THINKGEAR_DEVICE_SERIAL_PORT = DEFAULT_THINKGEAR_DEVICE_SERIAL_PORT_LINUX
-
-		#THINKGEAR_EEG_POWER_BAND_ORDER = ['delta', \
-													#'theta', \
-													#'lowAlpha', \
-													#'highAlpha', \
-													#'lowBeta', \
-													#'highBeta', \
-													#'lowGamma', \
-													#'highGamma']
-	
