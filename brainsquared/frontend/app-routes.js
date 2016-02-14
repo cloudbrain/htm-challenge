@@ -8,6 +8,10 @@
       url:'/',
       template:'<brainsquared></brainsquared>'
     })
+    .state('training', {
+      url:'/training',
+      template:'<training></training>'
+    })
   $urlRouterProvider.otherwise('/');
 });
 

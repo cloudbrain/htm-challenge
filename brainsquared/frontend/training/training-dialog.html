@@ -1,0 +1,44 @@
+<md-dialog aria-label="Training" ng-cloak>
+    <form>
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2>Training</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="cancel()"> X
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content layout="column" class="training-dialog-content">
+            <div ng-if="!trainingFinished">
+
+                <div class="md-dialog-content">
+                    <p>
+                    </p>
+                </div>
+
+                <div class="direction-indicator">
+                    <span ng-if="direction == 'left'">&larr;</span>
+                    {{direction}}
+                    <span ng-if="direction == 'right'">&rarr;</span>
+                </div>
+                <div class="training-counter">{{counter}}</div>
+            </div>
+            <div ng-if="trainingFinished">
+                <div class="md-dialog-content">
+                    <p class="final-message">Training classifier...</p>
+                </div>
+
+            </div>
+        </md-dialog-content>
+    </form>
+
+    <md-button ng-if="!trainingFinished" type="submit" ng-click="startTraining()" class="md-raised md-primary" ng-disabled="isTraining">
+        Start
+    </md-button>
+
+    <md-button ng-if="trainingFinished" type="submit" ng-click="hide()" class="md-raised md-primary" ng-disabled="isTraining">
+        Close
+    </md-button>
+
+
+</md-dialog>
