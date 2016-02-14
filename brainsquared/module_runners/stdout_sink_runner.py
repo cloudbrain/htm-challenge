@@ -12,7 +12,7 @@ def _print_message(ch, method, properties, body):
 
 
 if __name__ == "__main__":
-  host = "localhost"
+  host = "127.0.0.1"
   username = "guest"
   pwd = "guest"
 
