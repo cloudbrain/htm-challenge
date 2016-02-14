@@ -5,13 +5,9 @@ if __name__ == "__main__":
   _USER_ID = "brainsquared"
   _MODULE_ID = "eye_blink_remover"
   _DEVICE_TYPE = "neurosky"
-  # _RMQ_ADDRESS = "localhost"
-  # _RMQ_USER = "guest"
-  # _RMQ_PWD = "guest"
-  
-  _RMQ_ADDRESS = "rabbitmq.cloudbrain.rocks"
-  _RMQ_USER = "cloudbrain"
-  _RMQ_PWD = "cloudbrain"
+  _RMQ_ADDRESS = "127.0.0.1"
+  _RMQ_USER = "guest"
+  _RMQ_PWD = "guest"
 
   # Module configuration
   _STEP_SIZE = 32

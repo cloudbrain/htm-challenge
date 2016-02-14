@@ -109,8 +109,6 @@ class ModuleAbstract:
     Initialize routing keys, publisher, and subscriber
     """
 
-    self._validate_metrics()
-
     if self._input_metrics is not None:  # Sources have no input metrics
 
       for input_metric_key, input_metric_name in self._input_metrics.items():

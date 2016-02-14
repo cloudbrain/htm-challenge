@@ -1,0 +1,34 @@
+.dialogdemoBasicUsage #popupContainer {
+    position: relative;
+}
+
+.dialogdemoBasicUsage .footer {
+    width: 100%;
+    text-align: center;
+    margin-left: 20px;
+}
+
+.training-dialog-content {
+    padding-top: 2px;
+}
+
+.md-dialog-content h2 {
+    font-size: 15px;
+}
+
+.md-dialog-content p {
+    font-size: 12px;
+}
+
+.training-counter {
+    font-size: 84px;
+    text-align: center;
+}
+
+.direction-indicator {
+    text-align: center;
+}
+
+.md-dialog-content p.final-message {
+    font-size: 22px;
+}

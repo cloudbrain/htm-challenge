@@ -10,7 +10,7 @@ from brainsquared.modules.runners.classifiers.conf.htm_conf import (
 if __name__ == "__main__":
   _USER_ID = "brainsquared"
   _DEVICE_TYPE = "neurosky"
-  _RMQ_ADDRESS = "localhost"
+  _RMQ_ADDRESS = "127.0.0.1"
   _RMQ_USER = "guest"
   _RMQ_PWD = "guest"
   _INPUT_METRICS = {"metric_to_classify": "eeg", "label_metric": "tag"}

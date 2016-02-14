@@ -4,15 +4,13 @@ if __name__ == "__main__":
   _USER_ID = "brainsquared"
   _DEVICE_TYPE = "neurosky"
 
-  _RMQ_ADDRESS = "localhost"
+  _RMQ_ADDRESS = "127.0.0.1"
   _RMQ_USER = "guest"
   _RMQ_PWD = "guest"
 
   # Module configuration
   _INPUT_METRICS = {"input": "attention", "input_label": None}
   _OUTPUT_METRICS = {"classification_result": "classification"}
-
-  _NUM_INPUT_CHANNELS = 1
 
   _CLASSIFIER_TYPE = "svm"
   module = SKLearnClassifier(_USER_ID,
