@@ -2,6 +2,7 @@
     <md-whiteframe class="md-whiteframe-z2 game-controls" layout layout-align="left center" layout-padding>
       <div layout="row">
         <md-button type="submit" ng-click="togglePlay()" class="md-raised md-primary">{{connected ? 'Stop' : 'Play'}}</md-button>
+        <training></training>
       </div>
       <div class="game-info score">
         Score: {{score}}
