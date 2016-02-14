@@ -5,7 +5,7 @@ if __name__ == "__main__":
   _USER_ID = "brainsquared"
   _DEVICE_TYPE = "wildcard"
 
-  _RMQ_ADDRESS = "localhost"
+  _RMQ_ADDRESS = "127.0.0.1"
   _RMQ_USER = "guest"
   _RMQ_PWD = "guest"
 

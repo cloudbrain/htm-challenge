@@ -4,6 +4,7 @@ Endpoint to send tags to rabbitMQ
 import json
 
 from flask import Flask, request
+from flask.ext.cors import CORS
 
 from brainsquared.publishers.PikaPublisher import PikaPublisher
 
@@ -17,6 +18,7 @@ _VALID_MODULES = ["motor_imagery"]
 modules = {}
 
 app = Flask(__name__)
+CORS(app)
 app.config['PROPAGATE_EXCEPTIONS'] = True
 
 tag_publisher = PikaPublisher(_RMQ_ADDRESS, _RMQ_USER, _RMQ_PWD)

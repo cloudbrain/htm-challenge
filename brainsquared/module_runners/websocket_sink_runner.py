@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-RABBITMQ_ADDRESS="localhost"
+RABBITMQ_ADDRESS="127.0.0.1"
 RABBITMQ_USER="guest"
 RABBITMQ_PWD="guest"
 

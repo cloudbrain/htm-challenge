@@ -75,6 +75,7 @@ def train_classifier(device, metric, num_categories, classifier_type):
 
   classifier_path = CLASSIFIER_PATH % {
     "classifier_type": classifier_type,
+    "device": device,
     "input_metric": metric
   }
 

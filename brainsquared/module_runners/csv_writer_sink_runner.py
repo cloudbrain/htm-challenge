@@ -4,12 +4,12 @@ if __name__ == "__main__":
   _USER_ID = "brainsquared"
   _DEVICE_TYPE = "neurosky"
 
-  _RMQ_ADDRESS = "localhost"
+  _RMQ_ADDRESS = "127.0.0.1"
   _RMQ_USER = "guest"
   _RMQ_PWD = "guest"
 
   # Module configuration
-  _INPUT_METRICS = {"input": "attention"}  # fft
+  _INPUT_METRICS = {"input": "attention"}  
   _OUTPUT_METRICS = None  # It's a sink module. So not output metrics allowed.
 
   _TIME_OFFSET = 2000  # 2s

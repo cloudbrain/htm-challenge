@@ -3,6 +3,6 @@ tornado==4.3
 sockjs-tornado==1.0.2
 pika==0.10
 simplejson==3.6.5
-flask==0.10.0
+flask==0.10.1
 mne==0.10.0
 numpy==1.9.2
