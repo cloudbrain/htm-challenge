@@ -76,7 +76,7 @@ def start():
     period = request.json["period"]
     label = request.json["label"]
     module.configure(offset, period, label)
-    module_name = "%s_%s" % (module_name, label)
+    module_name = "%s (tag: %s)" % (module_name, label)
 
   elif module_name == "SKLearnClassifier":
     classifier = request.json["classifier"]
@@ -86,11 +86,6 @@ def start():
     module.configure(classifier, num_categories)
     if train_classifier:
       clf_path, score = module.train()
-      print " => Modules: %s" % modules
-      return json.dumps("Classifier trained. Accuracy: %s. To start the "
-                        "classifier call this endpoint again and set "
-                        "'train_classifier' to false."
-                        % score), 200
   else:
     print " => Modules: %s" % modules
     return json.dumps("Invalid module name: %s" % module_name), 400
