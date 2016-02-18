@@ -4,5 +4,6 @@ sockjs-tornado==1.0.2
 pika==0.10
 simplejson==3.6.5
 flask==0.10.1
+flask-cors==2.1.2
 mne==0.10.0
 numpy==1.9.2
