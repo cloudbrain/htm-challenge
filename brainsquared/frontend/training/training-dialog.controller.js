@@ -1,4 +1,4 @@
-function TrainingDialogCtrl($scope, $mdDialog, COUNTER, TRAINING_CLASSIFIER_TIMEOUT) {
+function TrainingDialogCtrl($scope, $mdDialog, COUNTER, TRAINING_CLASSIFIER_TIMEOUT, TrainingService) {
   $scope.hide = function () {
     $mdDialog.hide();
   };
@@ -10,15 +10,14 @@ function TrainingDialogCtrl($scope, $mdDialog, COUNTER, TRAINING_CLASSIFIER_TIME
   resetAll();
 
   $scope.startTraining = function () {
-    callApi();
-    $scope.isTraining = true;
+    startRecording();
     resetCounter();
     $scope.counterInterval = setInterval(countDown, 1000);
   };
 
   function resetAll() {
-    $scope.isTraining = false;
-    $scope.trainingFinished = false;
+    $scope.isRecording = false;
+    $scope.trainingStarted = false;
     $scope.direction = 'left';
     resetCounter();
   }
@@ -27,7 +26,7 @@ function TrainingDialogCtrl($scope, $mdDialog, COUNTER, TRAINING_CLASSIFIER_TIME
     $scope.counter = $scope.counter - 1;
     if ($scope.counter === 0) {
       clearInterval($scope.counterInterval);
-      $scope.isTraining = false;
+      $scope.isRecording = false;
       resetCounter();
       nextScreen();
     }
@@ -42,14 +41,35 @@ function TrainingDialogCtrl($scope, $mdDialog, COUNTER, TRAINING_CLASSIFIER_TIME
     if ($scope.direction === 'left') {
       $scope.direction = 'right';
     } else {
-      $scope.trainingFinished = true;
-      setTimeout(function () {
-        $mdDialog.hide();
+      $scope.trainingStarted = true;
+      setTimeout(function () { // Delay hack to make sure it's finished recording
+        startTraining();
       }, TRAINING_CLASSIFIER_TIMEOUT)
     }
   }
 
-  function callApi() {
-
+  function startRecording() {
+    console.log('Stating to record for: ' + $scope.direction);
+    var label = $scope.direction == 'left' ? 0 : 1;
+    TrainingService.record(label).then(function () {
+      $scope.isRecording = true;
+    });
   }
+
+  function startTraining() {
+    console.log('Stating to train the classifier');
+    TrainingService.classify(true).then(function () {
+      setTimeout(function () { // Delay hack to make sure it's finished training
+        endTraining();
+      }, TRAINING_CLASSIFIER_TIMEOUT);
+    });
+  }
+
+  function endTraining() {
+    console.log('Finished training the classifier');
+    TrainingService.classify(false).then(function () {
+      $mdDialog.hide();
+    });
+  }
+
 }

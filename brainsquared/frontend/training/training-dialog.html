@@ -9,7 +9,7 @@
             </div>
         </md-toolbar>
         <md-dialog-content layout="column" class="training-dialog-content">
-            <div ng-if="!trainingFinished">
+            <div ng-if="!trainingStarted">
 
                 <div class="md-dialog-content">
                     <p>
@@ -23,7 +23,7 @@
                 </div>
                 <div class="training-counter">{{counter}}</div>
             </div>
-            <div ng-if="trainingFinished">
+            <div ng-if="trainingStarted">
                 <div class="md-dialog-content">
                     <p class="final-message">Training classifier...</p>
                 </div>
@@ -32,11 +32,11 @@
         </md-dialog-content>
     </form>
 
-    <md-button ng-if="!trainingFinished" type="submit" ng-click="startTraining()" class="md-raised md-primary" ng-disabled="isTraining">
+    <md-button ng-if="!trainingStarted" type="submit" ng-click="startTraining()" class="md-raised md-primary" ng-disabled="isRecording">
         Start
     </md-button>
 
-    <md-button ng-if="trainingFinished" type="submit" ng-click="hide()" class="md-raised md-primary" ng-disabled="isTraining">
+    <md-button ng-if="trainingStarted" type="submit" ng-click="hide()" class="md-raised md-primary" ng-disabled="isRecording">
         Close
     </md-button>
 
