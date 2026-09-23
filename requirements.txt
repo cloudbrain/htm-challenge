@@ -1,5 +1,5 @@
 scikit-learn==1.7.2
-tornado==6.5.7
+tornado==6.5.10
 sockjs-tornado==1.0.2
 pika==0.10
 simplejson==3.6.5
